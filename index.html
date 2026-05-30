@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบคำนวณเบี้ยประกันผู้ช่วยเสียง - ลิตา</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    :root {
+        --primary: #e86614;
+        --primary-light: #fff2e8;
+        --text-dark: #333333;
+        --text-grey: #666666;
+        --bg-color: #fcf9f5;
+        --border-color: #e5e5e5;
+        --active-border: #f6f3e8;
+        
+        /* Health Sub Plan Colors */
+        --c-bronze: #cd7f32;
+        --c-silver: #9ca3af;
+        --c-gold: #d4af37;
+        --c-platinum: #5eead4;
+        --c-sapphire: #0f172a;
+        --c-diamond: #0284c7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        font-family: 'Prompt', sans-serif;
+        background-color: var(--bg-color);
+        margin: 0;
+        color: var(--text-dark);
+        padding-bottom: 105px;
+    }
+
+   .app-header {
+    background: white;
+    padding: 15px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 3px solid var(--primary);
+}
+
+    .main-title {
+        margin: 0;
+        font-size: 24px;
+        color: var(--primary);
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .main-title i { margin-right: 5px; }
+
+    .tab-wrapper {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        padding: 10px 20px;
+        border: 2px solid var(--border-color);
+        border-radius: 30px;
+        background: white;
+        cursor: pointer;
+        font-family: 'Prompt', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-grey);
+        transition: 0.25s;
+    }
+
+    .tab-btn.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: white;
+    }
+
+    /* Sub Tabs for Health */
+    .sub-tab-wrapper {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 25px;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 15px;
+    }
+    .sub-tab-btn {
+        padding: 12px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        background: #fafafa;
+        cursor: pointer;
+        font-family: 'Prompt', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-grey);
+        transition: 0.2s;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .sub-tab-btn i { font-size: 20px; }
+    .sub-tab-btn:hover { background: var(--primary-light); color: var(--primary); }
+    .sub-tab-btn.active {
+        background: var(--primary-light);
+        border-color: var(--primary);
+        color: var(--primary);
+        box-shadow: inset 0 0 0 1px var(--primary);
+    }
+
+    .health-sub-view { display: none; animation: fadeIn 0.3s ease-in-out; }
+    .health-sub-view.active { display: block; }
+
+    .container {
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 0 20px;
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+    }
+
+    .left-panel {
+        width: 500px;
+        flex-shrink: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        overflow: hidden;
+        position: sticky;
+        top: 20px;
+    }
+
+    .right-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        min-width: 0;
+    }
+
+    /* Voice Control */
+    .voice-control-box {
+        background: linear-gradient(135deg, var(--primary-light) 0%, #fff 100%);
+        border: 1px solid #fbdcbe;
+        padding: 25px 20px;
+        text-align: center;
+        margin: 25px 25px 0;
+        border-radius: 12px;
+    }
+
+    #mic-btn {
+        background-color: var(--primary);
+        color: white;
+        border: 4px solid white;
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        font-size: 32px;
+        transition: all 0.3s ease;
+        outline: none;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 15px rgba(232, 102, 20, 0.3);
+        animation: suggestPulse 2s infinite;
+    }
+
+    #mic-btn:hover { background-color: #cf5a10; transform: scale(1.05); }
+    #mic-btn.listening {
+        background-color: #ff4d4f;
+        color: white;
+        border-color: #fff;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes suggestPulse {
+        0% { box-shadow: 0 0 0 0 rgba(232, 102, 20, 0.6); }
+        70% { box-shadow: 0 0 0 20px rgba(232, 102, 20, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(232, 102, 20, 0); }
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.7); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 77, 79, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 79, 0); }
+    }
+
+    .voice-debug { color: var(--primary); font-size: 16px; font-weight: 600; min-height: 22px; }
+    .voice-hint { font-size: 13px; color: var(--text-grey); display: block; margin-top: 5px; }
+
+    /* Forms & Inputs */
+    .input-section { padding: 25px; }
+    .input-section h2 { font-size: 20px; margin: 0 0 20px; color: var(--text-dark); border-bottom: 2px solid var(--primary-light); padding-bottom: 10px; }
+    
+    .form-row { display: flex; gap: 15px; margin-bottom: 20px; }
+    .form-group { flex: 1; margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+
+    .btn-select-group { display: flex; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+    .btn-select { flex: 1; padding: 10px; border: none; background: #fafafa; cursor: pointer; font-family: 'Prompt', sans-serif; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s; }
+    .btn-select.active { background: var(--primary-light); color: var(--primary); font-weight: 600; border: 1px solid var(--primary); }
+    
+    .btn-select-vertical { flex-direction: column; gap: 12px; border: none; overflow: visible; background: transparent; }
+    .btn-select-vertical .btn-select { width: 100%; border-radius: 8px; border: 2px solid var(--primary); padding: 14px 15px; justify-content: flex-start; gap: 12px; background: var(--primary-light); color: var(--text-dark); font-weight: 500; }
+    .btn-select-vertical .btn-select i { color: var(--primary); font-size: 18px; }
+    .btn-select-vertical .btn-select.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: inset 0 0 0 2px var(--active-border), 0 4px 10px rgba(232, 102, 20, 0.25); }
+    .btn-select-vertical .btn-select.active i { color: white; }
+
+    input[type="number"], input[type="text"] { width: 100%; padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Prompt', sans-serif; font-size: 16px; height: 44px; transition: border-color 0.2s; }
+    input[type="number"]:focus, input[type="text"]:focus { outline: none; border-color: var(--primary); }
+
+    /* Plan Grids */
+    .plan-options-grid { display: grid; gap: 12px; margin-bottom: 25px; grid-template-columns: repeat(2, 1fr); }
+    .plan-options-grid-health { display: grid; gap: 12px; margin-bottom: 25px; grid-template-columns: repeat(3, 1fr); }
+
+    .plan-opt-btn { border: 2px solid var(--primary); border-radius: 8px; padding: 15px 5px; text-align: center; cursor: pointer; background: white; transition: all 0.2s ease-in-out; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; min-height: 94px; }
+    .plan-opt-btn.has-tag { padding-top: 25px; }
+    .plan-opt-btn:hover { background: var(--primary-light); }
+    .plan-opt-btn.active { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 2px var(--active-border), 0 4px 12px rgba(232, 102, 20, 0.35); }
+    
+    .plan-tag { position: absolute; top: 6px; left: 10px; font-size: 16px; font-weight: 800; color: var(--primary); z-index: 1; }
+    .plan-opt-btn.active .plan-tag { color: rgba(255,255,255,0.9); }
+    .pop-badge { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: #cf5a10; color: white; font-size: 14px; font-weight: 800; padding: 3px 16px; border-radius: 24px; white-space: nowrap; z-index: 1; border: 2px solid white; }
+    
+    .plan-icon { font-size: 24px; margin-bottom: 5px; transition: 0.2s; }
+    .plan-name { font-weight: 800; font-size: 18px; color: var(--text-dark); margin-bottom: 2px; transition: 0.2s; }
+    .plan-limit { font-size: 12px; color: var(--text-grey); font-weight: 500; transition: 0.2s; }
+    .plan-opt-btn.active .plan-name, .plan-opt-btn.active .plan-limit, .plan-opt-btn.active .plan-icon { color: white !important; }
+    .plan-opt-btn.full-width { grid-column: span 2; }
+
+    /* Prima Care Specific Overrides */
+    .occ-group { display: flex; gap: 8px; margin-bottom: 4px; }
+    .occ-btn { flex: 1; min-height: 44px; padding: 8px 6px; border: 1px solid var(--border-color); border-radius: 8px; background: white; cursor: pointer; font-family: 'Prompt'; font-size: 13px; transition: 0.2s; }
+    .occ-btn.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); font-weight: 600; }
+    .occ-note { color: #d63031; font-size: 12px; font-weight: 400; margin-top: 5px; }
+
+    .prema-plan-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
+    .prema-plan-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px 4px 12px; text-align: center; cursor: pointer; background: white; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+    .prema-plan-card i { color: #3a9d94; font-size: 20px; margin-bottom: 8px; }
+    .prema-plan-card .p-name { font-weight: 800; font-size: 16px; color: var(--primary); margin-bottom: 2px; line-height: 1.1; }
+    .prema-plan-card .p-room { font-size: 11px; color: var(--text-dark); font-weight: 600; }
+    .prema-plan-card.active { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 2px #fff, 0 8px 15px rgba(232, 102, 20, 0.25); transform: translateY(-2px); }
+    .prema-plan-card.active i, .prema-plan-card.active .p-name, .prema-plan-card.active .p-room { color: white; }
+
+    /* Kid Specific Elements */
+    .kid-age-group { display: flex; gap: 10px; }
+    .btn-age-kid { flex: 1; padding: 12px 5px; border: 2px solid var(--border-color); border-radius: 8px; background: white; cursor: pointer; font-family: 'Prompt'; font-size: 14px; color: var(--text-grey); font-weight: 500; transition: all 0.2s; text-align: center; }
+    .btn-age-kid.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: 700; }
+    
+    .deduct-btn-group { display: flex; flex-direction: column; gap: 10px; }
+    .btn-deduct { width: 100%; border-radius: 8px; border: 2px solid var(--border-color); padding: 15px; display: flex; justify-content: space-between; align-items: center; background: white; color: var(--text-grey); font-weight: 500; font-size: 15px; transition: all 0.2s; cursor: pointer; }
+    .btn-deduct:hover { background: #fafbfc; }
+    .btn-deduct.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(232, 102, 20, 0.2); }
+    .btn-deduct .deduct-val { font-weight: 700; font-size: 16px; }
+    .btn-deduct .deduct-desc { font-size: 13px; opacity: 0.8; font-weight: 400;}
+    
+    .kid-benefits { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; margin-bottom: 20px; }
+    .benefit-item { background: #FAFAFA; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border-color);}
+    .benefit-icon { width: 45px; height: 45px; background: white; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); flex-shrink: 0;}
+    .benefit-text { flex: 1; }
+    .benefit-text p { margin: 0; font-size: 13px; color: var(--text-grey); line-height: 1.3;}
+    .benefit-text strong { display: block; font-size: 16px; color: var(--text-dark); margin-top: 2px;}
+
+    /* Sliders */
+    .custom-sliders-box { background: #fff; padding: 20px; border-radius: 10px; border: 1px dashed var(--border-color); }
+    .slider-group { margin-bottom: 25px; }
+    .slider-group:last-child { margin-bottom: 0; }
+    .slider-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .slider-label { font-size: 14px; font-weight: 600; color: var(--text-dark); }
+    .slider-input-wrapper { width: 130px; flex-shrink: 0; }
+    .slider-input-wrapper input { height: 38px; font-size: 15px; padding: 5px 12px; text-align: right; color: var(--primary); font-weight: 600; background-color: var(--primary-light); border: 1px solid var(--primary); }
+    input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-top: 8px; }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 10px; cursor: pointer; background: #e0e0e0; border-radius: 6px; }
+    input[type=range]::-webkit-slider-thumb { height: 28px; width: 28px; border-radius: 50%; background: var(--primary); cursor: pointer; -webkit-appearance: none; margin-top: -9px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+
+    .error-msg { color: #d32f2f; font-size: 13px; margin-top: 10px; display: none; font-weight: 500; margin-bottom: 15px; }
+
+    /* Results */
+    .header-right h2 { margin: 0 0 14px; font-size: 21px; }
+    .plan-card { background: white; border: 2px solid var(--primary); border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(232, 102, 20, 0.1); }
+    .plan-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+    .plan-title h3 { margin: 0; font-size: 20px; color: var(--text-dark); }
+    .plan-title p { margin: 5px 0 0; font-size: 14px; color: var(--text-grey); background: var(--bg-color); padding: 4px 10px; border-radius: 6px; display: inline-block; font-weight: 500; }
+    .plan-price-display { text-align: right; flex-shrink: 0; }
+    .price-label { font-size: 14px; color: var(--text-grey); margin-bottom: 5px; }
+    .price-amount { font-size: 34px; font-weight: 700; color: var(--primary); line-height: 1; }
+    .price-unit { font-size: 16px; font-weight: 400; }
+    .plan-details { margin-top: 25px; border-top: 1px dashed var(--border-color); padding-top: 20px; }
+    .detail-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; color: var(--text-dark); align-items: center; gap: 14px; }
+    .detail-val { font-weight: 600; color: var(--text-dark); text-align: right; font-size: 16px; flex-shrink: 0; }
+    .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-grey); margin-bottom: 15px; padding-left: 15px; gap: 10px; }
+
+    .coverage-table-container { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); overflow: hidden; border: 1px solid var(--border-color); }
+    .coverage-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .coverage-table th, .coverage-table td { padding: 12px 20px; text-align: right; border-bottom: 1px solid var(--border-color); color: var(--text-dark); vertical-align: top; }
+    .coverage-table td:first-child { text-align: left; width: 65%; font-weight: 400; }
+    .coverage-table td:last-child { color: var(--primary) !important; font-weight: 700; font-size: 15px; }
+    .coverage-table tr:nth-child(even) { background-color: #fafafa; }
+    .table-section { background-color: #f9f3ea !important; font-size: 15px; border-bottom: 1px solid var(--border-color); }
+    .table-section td { text-align: left !important; padding: 14px 20px !important; }
+    .table-section .section-title { color: #000000; font-weight: 700; }
+    .table-section i { color: var(--primary); margin-right: 8px; font-size: 16px; }
+    .td-bullet { padding-left: 35px !important; color: var(--text-grey); font-size: 13px; }
+    .td-highlight-text { color: var(--primary); font-weight: 600; }
+
+    .premium-sticky-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 250; background: white; border-top: 3px solid var(--primary); box-shadow: 0 -5px 22px rgba(0,0,0,0.14); padding: 12px 20px; }
+    .sticky-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .sticky-avatar { width: 50px; height: 50px; object-fit: contain; flex-shrink: 0; border-radius: 50%; background: transparent; }
+    .sticky-plan-name { font-size: 16px; color: var(--text-grey); font-weight: 600; }
+    .sticky-detail { font-size: 13px; color: var(--primary); margin-top: 2px; }
+    .sticky-price-box { text-align: right; flex-shrink: 0; }
+    .sticky-price-label { font-size: 14px; color: var(--text-grey); margin-bottom: 3px; }
+    .sticky-price { font-size: 28px; line-height: 1; color: var(--primary); font-weight: 700; }
+    .sticky-price span { font-size: 24px; font-weight: 800; }
+
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fadeIn 0.35s ease-in-out; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 900px) {
+        .container { flex-direction: column; }
+        .left-panel { width: 100%; position: relative; top: 0; }
+        .plan-options-grid-health { grid-template-columns: repeat(2, 1fr); }
+        .main-title { font-size: 18px; }
+        .app-header { padding: 10px 15px; }
+    }
+
+    @media (max-width: 600px) {
+        body { padding-bottom: 120px; }
+        .container { margin: 18px auto; padding: 0 12px; }
+        .voice-control-box { margin: 16px 16px 0; }
+        .input-section { padding: 18px; }
+        .form-row, .plan-header, .detail-row { flex-direction: column; align-items: stretch; }
+        .plan-price-display, .detail-val { text-align: left; }
+        .plan-options-grid, .plan-options-grid-health { grid-template-columns: 1fr; }
+        .plan-opt-btn.full-width { grid-column: auto; }
+        .coverage-table th, .coverage-table td { padding: 10px 12px; }
+        .sticky-inner { align-items: flex-start; }
+        .sticky-price { font-size: 24px; }
+        .sticky-detail { font-size: 12px; }
+        .sub-tab-wrapper { grid-template-columns: 1fr; }
+        .sub-tab-btn { flex-direction: row; justify-content: flex-start; padding: 12px 15px; text-align: left; }
+        .sub-tab-btn i { margin-right: 10px; }
+        .kid-benefits { grid-template-columns: 1fr; gap: 10px; }
+        .prema-plan-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+</style>
+</head>
+<body>
+
+<script>
+    const password = "ao138";
+    const userPass = prompt("กรุณาใส่รหัสผ่านสำหรับทีมงาน:");
+    if (userPass !== password) {
+        document.body.innerHTML = "<div style='text-align:center; margin-top:80px; font-family:Prompt, sans-serif;'><h1 style='color:#e86614;'>Access Denied</h1><p>คุณไม่มีสิทธิ์เข้าถึงเนื้อหาในหน้านี้</p></div>";
+        window.stop();
+    }
+</script>
+
+<div class="app-header">
+    <h1 class="main-title"><i class="fa-solid fa-microphone-lines"></i> ระบบคำนวณเบี้ยประกัน FWD</h1>
+    <div class="tab-wrapper">
+        <button class="tab-btn active" onclick="manualSwitchView('savings')" id="tab-savings">แผนสร้างมรดก + 50 โรคร้ายแรง</button>
+        <button class="tab-btn" onclick="manualSwitchView('health')" id="tab-health">แผนประกันสุขภาพเหมาจ่าย</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="left-panel">
+        <div class="voice-control-box">
+            <button id="mic-btn" onclick="toggleVoiceRecognition()" title="กดเพื่อเปิด/ปิด สั่งงานด้วยเสียง">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
+            <div id="voice-debug" class="voice-debug">พร้อมใช้งาน กดไมค์แล้วทัก "สวัสดีลิตา" ได้เลยค่ะ</div>
+            <span class="voice-hint">ลองพูด: "มรดก", "สุขภาพ", "แผนเด็ก", "แผนโกลด์" หรือ "พรีม่าแคร์"</span>
+        </div>
+
+        <div id="view-savings" class="view-section active">
+            <div class="input-section">
+                <h2>แผนสร้างมรดก + 50 โรคร้ายแรง</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>เพศ</label>
+                        <div class="btn-select-group">
+                            <button class="btn-select active" id="sav-btn-male" onclick="setSavGender('male')">ชาย</button>
+                            <button class="btn-select" id="sav-btn-female" onclick="setSavGender('female')">หญิง</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex: 0.6;">
+                        <label>อายุ (ปี)</label>
+                        <input type="number" id="sav-age-input" value="30" min="16" max="65" oninput="calculateSavings()">
+                        <div style="font-size: 11px; color: #888; margin-top: 4px;">รับประกัน 16-65 ปี</div>
+                    </div>
+                </div>
+
+                <label style="font-weight: 600; margin-bottom: 12px; display: block;">เลือกแผนสำเร็จรูป หรือ ปรับแต่งเอง</label>
+                <div class="plan-options-grid">
+                    <div class="plan-opt-btn has-tag" id="sav-plan-1" onclick="selectSavPlan(1)">
+                        <span class="plan-tag">แผน 1</span>
+                        <div class="plan-name">1.2 ล้าน</div>
+                        <div class="plan-limit">ออม 2 แสน / โรคร้าย 1 ล้าน</div>
+                    </div>
+                    <div class="plan-opt-btn has-tag active" id="sav-plan-2" onclick="selectSavPlan(2)">
+                        <span class="plan-tag">แผน 2</span>
+                        <div class="pop-badge">ขายดี</div>
+                        <div class="plan-name">2.2 ล้าน</div>
+                        <div class="plan-limit">ออม 2 แสน / โรคร้าย 2 ล้าน</div>
+                    </div>
+                    <div class="plan-opt-btn has-tag" id="sav-plan-3" onclick="selectSavPlan(3)">
+                        <span class="plan-tag">แผน 3</span>
+                        <div class="plan-name">3.2 ล้าน</div>
+                        <div class="plan-limit">ออม 2 แสน / โรคร้าย 3 ล้าน</div>
+                    </div>
+                    <div class="plan-opt-btn has-tag" id="sav-plan-4" onclick="selectSavPlan(4)">
+                        <span class="plan-tag">แผน 4</span>
+                        <div class="plan-name">5.2 ล้าน</div>
+                        <div class="plan-limit">ออม 2 แสน / โรคร้าย 5 ล้าน</div>
+                    </div>
+                    <div class="plan-opt-btn has-tag full-width" id="sav-plan-5" onclick="selectSavPlan(5)">
+                        <span class="plan-tag">แผน 5</span>
+                        <div class="plan-name">10.2 ล้าน</div>
+                        <div class="plan-limit">ออม 2 แสน / โรคร้าย 10 ล้าน</div>
+                    </div>
+                </div>
+
+                <div class="custom-sliders-box">
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">1. ทุนชีวิตหลัก (เงินออม)</span>
+                            <div class="slider-input-wrapper">
+                                <input type="text" id="sav-main-display" onchange="handleSavMainManual(this.value)">
+                            </div>
+                        </div>
+                        <input type="range" id="sav-main-slider" min="200000" max="10000000" step="100000" oninput="handleSavMainSlider(this.value)">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">2. ทุน 50 โรคร้ายแรง</span>
+                            <div class="slider-input-wrapper">
+                                <input type="text" id="sav-ci-display" onchange="handleSavCIManual(this.value)">
+                            </div>
+                        </div>
+                        <input type="range" id="sav-ci-slider" min="500000" max="10000000" step="100000" oninput="handleSavCISlider(this.value)">
+                    </div>
+                </div>
+                <div id="sav-sum-error" class="error-msg"></div>
+            </div>
+        </div>
+
+        <div id="view-health" class="view-section">
+            <div class="input-section">
+                <h2>แผนประกันสุขภาพเหมาจ่าย</h2>
+                
+                <div class="sub-tab-wrapper">
+                    <button class="sub-tab-btn active" id="sub-btn-precious" onclick="switchHealthSubView('precious')">
+                        <i class="fa-solid fa-user"></i> Precious Protection<br>(ผู้ใหญ่)
+                    </button>
+                    <button class="sub-tab-btn" id="sub-btn-kids" onclick="switchHealthSubView('kids')">
+                        <i class="fa-solid fa-child-reaching"></i> Precious Care<br>for Kids
+                    </button>
+                    <button class="sub-tab-btn" id="sub-btn-prema" onclick="switchHealthSubView('prema')">
+                        <i class="fa-solid fa-hand-holding-medical"></i> Prima<br>Care
+                    </button>
+                </div>
+
+                <div id="health-sub-precious" class="health-sub-view active">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>เพศ</label>
+                            <div class="btn-select-group">
+                                <button class="btn-select active" id="hlth-btn-male" onclick="setHlthGender('male')">ชาย</button>
+                                <button class="btn-select" id="hlth-btn-female" onclick="setHlthGender('female')">หญิง</button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="flex: 0.6;">
+                            <label>อายุ (ปี)</label>
+                            <input type="number" id="hlth-age-input" value="30" min="1" max="75" oninput="calculateHealth()">
+                            <div style="font-size: 11px; color: #888; margin-top: 4px;">รับประกัน 1 เดือน - 75 ปี</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label>รูปแบบความคุ้มครอง (Deductible)</label>
+                        <div class="btn-select-group btn-select-vertical">
+                            <button class="btn-select active" id="hlth-btn-nondeduct" onclick="setHlthDeductible(false)">
+                                <i class="fa-solid fa-circle-check"></i> เหมาจ่ายตั้งแต่บาทแรก (ไม่จ่ายส่วนแรก)
+                            </button>
+                            <button class="btn-select" id="hlth-btn-deduct" onclick="setHlthDeductible(true)">
+                                <i class="fa-solid fa-hand-holding-dollar"></i> แบบมีส่วนร่วมจ่าย (ประหยัดเบี้ยสูงสุด 50%)
+                            </button>
+                        </div>
+                    </div>
+
+                    <label style="font-weight: 600; margin-bottom: 12px; display: block;">เลือกแผนความคุ้มครองเหมาจ่าย</label>
+                    <div class="plan-options-grid-health">
+                        <div class="plan-opt-btn has-tag" id="hlth-plan-bronze" onclick="selectHlthPlan('bronze')"><span class="plan-tag">แผน 1</span><div class="plan-icon" style="color: var(--c-bronze);"><i class="fa-solid fa-shield"></i></div><div class="plan-name">Bronze</div><div class="plan-limit">1 ล้านบาท</div></div>
+                        <div class="plan-opt-btn has-tag" id="hlth-plan-silver" onclick="selectHlthPlan('silver')"><span class="plan-tag">แผน 2</span><div class="plan-icon" style="color: var(--c-silver);"><i class="fa-solid fa-shield"></i></div><div class="plan-name">Silver</div><div class="plan-limit">3 ล้านบาท</div></div>
+                        <div class="plan-opt-btn has-tag active" id="hlth-plan-gold" onclick="selectHlthPlan('gold')"><span class="plan-tag">แผน 3</span><div class="pop-badge">ขายดี</div><div class="plan-icon" style="color: var(--c-gold);"><i class="fa-solid fa-shield"></i></div><div class="plan-name">Gold</div><div class="plan-limit">6 ล้านบาท</div></div>
+                        <div class="plan-opt-btn has-tag" id="hlth-plan-platinum" onclick="selectHlthPlan('platinum')"><span class="plan-tag">แผน 4</span><div class="plan-icon" style="color: var(--c-platinum);"><i class="fa-solid fa-shield"></i></div><div class="plan-name">Platinum</div><div class="plan-limit">12 ล้านบาท</div></div>
+                        <div class="plan-opt-btn has-tag" id="hlth-plan-sapphire" onclick="selectHlthPlan('sapphire')"><span class="plan-tag">แผน 5</span><div class="plan-icon" style="color: var(--c-sapphire);"><i class="fa-solid fa-gem"></i></div><div class="plan-name">Sapphire</div><div class="plan-limit">40 ล้านบาท</div></div>
+                        <div class="plan-opt-btn has-tag" id="hlth-plan-diamond" onclick="selectHlthPlan('diamond')"><span class="plan-tag">แผน 6</span><div class="plan-icon" style="color: var(--c-diamond);"><i class="fa-regular fa-gem"></i></div><div class="plan-name">Diamond</div><div class="plan-limit">100 ล้านบาท</div></div>
+                    </div>
+                    <div id="hlth-sum-error" class="error-msg"></div>
+                </div>
+
+                <div id="health-sub-kids" class="health-sub-view">
+                    <div class="form-group">
+                        <label>เพศของน้อง</label>
+                        <div class="btn-select-group">
+                            <button class="btn-select active" id="kid-btn-male" onclick="setKidGender('male')">ชาย</button>
+                            <button class="btn-select" id="kid-btn-female" onclick="setKidGender('female')">หญิง</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>อายุของน้อง (ปี)</label>
+                        <div class="kid-age-group">
+                            <button class="btn-age-kid active" onclick="setKidAge('0-1')">1 เดือน - 1 ปี</button>
+                            <button class="btn-age-kid" onclick="setKidAge('2-3')">2 - 3 ปี</button>
+                            <button class="btn-age-kid" onclick="setKidAge('4-5')">4 - 5 ปี</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>เลือกแผนความคุ้มครองเหมาจ่าย</label>
+                        <div class="plan-options-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="plan-opt-btn has-tag" id="kid-plan-bronze" onclick="selectKidPlan('bronze')">
+                                <span class="plan-tag">แผน 1</span>
+                                <div class="plan-icon" style="font-size: 32px;">🧸</div>
+                                <div class="plan-name">Bronze</div>
+                                <div class="plan-limit">1 ล้านบาท</div>
+                            </div>
+                            <div class="plan-opt-btn has-tag" id="kid-plan-silver" onclick="selectKidPlan('silver')">
+                                <span class="plan-tag">แผน 2</span>
+                                <div class="plan-icon" style="font-size: 32px;">🚗</div>
+                                <div class="plan-name">Silver</div>
+                                <div class="plan-limit">3 ล้านบาท</div>
+                            </div>
+                            <div class="plan-opt-btn has-tag active" id="kid-plan-gold" onclick="selectKidPlan('gold')">
+                                <span class="plan-tag">แผน 3</span>
+                                <div class="pop-badge">ขายดี</div>
+                                <div class="plan-icon" style="font-size: 32px;">👑</div>
+                                <div class="plan-name">Gold</div>
+                                <div class="plan-limit">6 ล้านบาท</div>
+                            </div>
+                            <div class="plan-opt-btn has-tag" id="kid-plan-platinum" onclick="selectKidPlan('platinum')">
+                                <span class="plan-tag">แผน 4</span>
+                                <div class="plan-icon" style="font-size: 32px;">🚀</div>
+                                <div class="plan-name">Platinum</div>
+                                <div class="plan-limit">12 ล้านบาท</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>รูปแบบความรับผิดส่วนแรก (Deductible)</label>
+                        <div class="deduct-btn-group" id="deductible-container">
+                            </div>
+                    </div>
+                </div>
+
+                <div id="health-sub-prema" class="health-sub-view">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>เพศ</label>
+                            <div class="btn-select-group">
+                                <button class="btn-select active" id="prema-btn-male" onclick="setPremaGender('male')">ชาย</button>
+                                <button class="btn-select" id="prema-btn-female" onclick="setPremaGender('female')">หญิง</button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="flex: 0.6;">
+                            <label>อายุ (ปี)</label>
+                            <input type="number" id="prema-age-input" value="30" min="1" max="70" oninput="calculatePrema()">
+                            <div style="font-size: 11px; color: #888; margin-top: 4px;">รับประกัน 1 - 70 ปี</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>ขั้นอาชีพ</label>
+                        <div class="occ-group">
+                            <button class="occ-btn active" id="prema-occ-12" onclick="setPremaOcc('12')">ขั้น 1-2 (ทั่วไป)</button>
+                            <button class="occ-btn" id="prema-occ-3" onclick="setPremaOcc('3')">ขั้น 3 (ช่าง)</button>
+                            <button class="occ-btn" id="prema-occ-4" onclick="setPremaOcc('4')">ขั้น 4 (เสี่ยง)</button>
+                        </div>
+                        <div class="occ-note">*เพื่อความถูกต้องโปรดสอบถามขั้นอาชีพกับตัวแทน</div>
+                    </div>
+
+                    <label style="font-weight: 600; margin-bottom: 12px; display: block;">เลือกแพ็กเกจค่าห้อง (Prima Care)</label>
+                    <div class="prema-plan-grid">
+                        <div class="prema-plan-card" id="prema-plan-s" onclick="setPremaPlan('s')">
+                            <i class="fa-solid fa-bed-pulse"></i>
+                            <div class="p-name">S</div><div class="p-room">ห้อง 1,500</div>
+                        </div>
+                        <div class="prema-plan-card" id="prema-plan-m" onclick="setPremaPlan('m')">
+                            <i class="fa-solid fa-bed-pulse"></i>
+                            <div class="p-name">M</div><div class="p-room">ห้อง 3,000</div>
+                        </div>
+                        <div class="prema-plan-card active" id="prema-plan-l" onclick="setPremaPlan('l')">
+                            <i class="fa-solid fa-bed-pulse"></i>
+                            <div class="p-name">L</div><div class="p-room">ห้อง 4,500</div>
+                        </div>
+                        <div class="prema-plan-card" id="prema-plan-xl" onclick="setPremaPlan('xl')">
+                            <i class="fa-solid fa-bed-pulse"></i>
+                            <div class="p-name">XL</div><div class="p-room">ห้อง 6,000</div>
+                        </div>
+                        <div class="prema-plan-card" id="prema-plan-xxl" onclick="setPremaPlan('xxl')">
+                            <i class="fa-solid fa-bed-pulse"></i>
+                            <div class="p-name">XXL</div><div class="p-room">ห้อง 7,500</div>
+                        </div>
+                    </div>
+                    <div id="prema-sum-error" class="error-msg"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        
+        <div id="result-savings" class="view-section active">
+            <div class="header-right"><h2>สรุปแผนความคุ้มครองมรดก + 50 โรคร้ายแรง</h2></div>
+            <div class="plan-card" style="margin-bottom: 20px;">
+                <div class="plan-header">
+                    <div class="plan-title">
+                        <h3>แผนสร้างมรดก + 50 โรคร้ายแรง</h3>
+                        <p id="sav-display-plan-sub">แผนคุ้มครองรวม 2.2 ล้านบาท</p>
+                    </div>
+                    <div class="plan-price-display">
+                        <div class="price-label">เบี้ยรวมต่อปี</div>
+                        <span class="price-amount" id="sav-total-price">-</span> <span class="price-unit">บาท</span>
+                    </div>
+                </div>
+                <div class="plan-details">
+                    <div class="detail-row"><span>1. สัญญาหลัก เงินออม (ตลอดชีพ)</span><span class="detail-val" id="sav-main-price">-</span></div>
+                    <div class="breakdown-row">ทุนประกัน <span><span id="sav-display-main-sum">200,000</span> บาท</span></div>
+                    <div class="detail-row" style="margin-top:15px;"><span>2. ประกัน 50 โรคร้ายแรง</span><span class="detail-val" id="sav-ci-price">-</span></div>
+                    <div class="breakdown-row">ทุนประกัน <span><span id="sav-display-ci-sum">2,000,000</span> บาท</span></div>
+                </div>
+            </div>
+
+            <div class="coverage-table-container">
+                <table class="coverage-table">
+                    <tr class="table-section"><td colspan="2"><i class="fa-solid fa-virus-covid"></i> <span class="section-title">1. ผลประโยชน์ 50 โรคร้ายแรง</span></td></tr>
+                    <tr><td><strong>1.1 ระยะเริ่มต้น (Early Stage)<br>5 โรคร้ายแรง</strong></td><td id="sav-tbl-early-stage">-</td></tr>
+                    <tr style="background-color: #fafafa;"><td colspan="2"><strong>1.2 ระยะรุนแรง (Last Stage)<br>45 โรคร้ายแรง</strong></td></tr>
+                    <tr style="background-color: #fafafa;"><td class="td-bullet">• กรณี<span class="td-highlight-text">ยังไม่มี</span>การจ่ายระยะเริ่มต้น</td><td id="sav-tbl-last-stage-1">-</td></tr>
+                    <tr style="background-color: #fafafa;"><td class="td-bullet">• กรณี<span class="td-highlight-text">มีการจ่าย</span>ระยะเริ่มต้นแล้ว</td><td id="sav-tbl-last-stage-2">-</td></tr>
+                    <tr class="table-section"><td colspan="2"><i class="fa-solid fa-bed-pulse"></i> <span class="section-title">2. ผลประโยชน์กรณีเสียชีวิต</span></td></tr>
+                    <tr><td class="td-bullet">• กรณี<span class="td-highlight-text">ยังไม่มี</span>การจ่ายโรคร้ายระยะเริ่มต้น</td><td id="sav-tbl-death-1">-</td></tr>
+                    <tr><td class="td-bullet">• กรณี<span class="td-highlight-text">มีการจ่าย</span>โรคร้ายระยะเริ่มต้นแล้ว</td><td id="sav-tbl-death-2">-</td></tr>
+                    <tr><td class="td-bullet">• กรณี<span class="td-highlight-text">มีการจ่าย</span>โรคร้ายระยะรุนแรงแล้ว</td><td id="sav-tbl-death-3">-</td></tr>
+                    <tr class="table-section"><td colspan="2"><i class="fa-solid fa-piggy-bank"></i> <span class="section-title">3. ผลประโยชน์กรณีมีชีวิตอยู่</span></td></tr>
+                    <tr><td style="padding-left: 20px;">กรณีมีชีวิตอยู่ครบกำหนดสัญญารับเงิน</td><td id="sav-tbl-maturity">-</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div id="result-health" class="view-section">
+            
+            <div id="health-res-precious" class="health-sub-view active">
+                <div class="header-right"><h2>สรุปแผนความคุ้มครอง (สุขภาพผู้ใหญ่)</h2></div>
+                <div class="plan-card" style="margin-bottom: 20px;">
+                    <div class="plan-header">
+                        <div class="plan-title">
+                            <h3>Precious Protection</h3>
+                            <p id="hlth-display-plan-sub">แผน Gold (เหมาจ่าย 6 ล้านบาท)</p>
+                        </div>
+                        <div class="plan-price-display">
+                            <div class="price-label">เบี้ยประกันรวมต่อปี</div>
+                            <span class="price-amount" id="hlth-total-price">-</span> <span class="price-unit">บาท</span>
+                        </div>
+                    </div>
+                    <div class="plan-details">
+                        <div class="detail-row"><span>1. ประกันชีวิตหลัก (ตลอดชีพ 99/99)</span><span class="detail-val" id="hlth-main-price">-</span></div>
+                        <div class="breakdown-row">ทุนคุ้มครองชีวิต <span>คงที่ 60,000 บาท</span></div>
+                        <div class="detail-row" style="margin-top:15px;"><span>2. ประกันสุขภาพเหมาจ่าย</span><span class="detail-val" id="hlth-rider-price">-</span></div>
+                        <div class="breakdown-row" id="hlth-deduct-display" style="color: var(--primary); font-weight: 600; display:none;">มีความรับผิดส่วนแรก <span><span id="hlth-display-deduct-amount">50,000</span> บาท/ครั้ง</span></div>
+                        <div class="breakdown-row">ความคุ้มครองสูงสุด <span><span id="hlth-display-rider-sum">6,000,000</span> บาท/ปี</span></div>
+                    </div>
+                </div>
+
+                <div class="coverage-table-container">
+                    <table class="coverage-table">
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-bed-pulse"></i> <span class="section-title">หมวดผู้ป่วยใน (IPD)</span></td></tr>
+                        <tr><td>ผลประโยชน์สูงสุดต่อปี</td><td id="hlth-tbl-max-limit" style="font-size: 18px;">6,000,000</td></tr>
+                        <tr><td>ค่าห้องและอาหาร บริการใน รพ. (ต่อวัน)</td><td id="hlth-tbl-room">6,000</td></tr>
+                        <tr><td>ค่ารักษาพยาบาล ผ่าตัด ตรวจวินิจฉัย</td><td>จ่ายตามจริง</td></tr>
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-stethoscope"></i> <span class="section-title">หมวดผู้ป่วยนอก (OPD)</span></td></tr>
+                        <tr><td>ค่ารักษาพยาบาลผู้ป่วยนอก (ต่อปี)</td><td id="hlth-tbl-opd">10,000</td></tr>
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-heart-pulse"></i> <span class="section-title">เพิ่มเติมกรณีเจ็บป่วย 3 โรคร้ายแรง</span></td></tr>
+                        <tr><td>เงินชดเชย 3 โรคร้ายแรง</td><td id="hlth-tbl-ci-money">50,000</td></tr>
+                        <tr><td>ค่าห้องเพิ่มเติม (ต่อวัน)</td><td id="hlth-tbl-ci-room">6,000</td></tr>
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-star"></i> <span class="section-title">ผลประโยชน์เพิ่มเติมอื่นๆ</span></td></tr>
+                        <tr><td>ค่าตรวจสุขภาพ / วัคซีน (ต่อปี)</td><td id="hlth-tbl-health-check">-</td></tr>
+                        <tr><td>ค่ารักษาทางทันตกรรม / สายตา</td><td id="hlth-tbl-dental">-</td></tr>
+                        <tr><td>ค่ารักษาแพทย์ทางเลือก</td><td id="hlth-tbl-alt-med">-</td></tr>
+                        <tr><td>ค่าตั้งครรภ์และคลอดบุตร / จิตเวช</td><td id="hlth-tbl-maternity">-</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div id="health-res-kids" class="health-sub-view">
+                <div class="header-right"><h2>สรุปแผนความคุ้มครอง (สุขภาพเด็ก)</h2></div>
+                <div class="plan-card" style="margin-bottom: 20px;">
+                    <div class="plan-header">
+                        <div class="plan-title">
+                            <h3 style="display:flex; align-items:center; gap:8px;"><span id="kid-display-icon">👑</span> <span id="kid-display-plan-name">Gold</span></h3>
+                            <p style="background:var(--primary-light); color:var(--primary);">เหมาจ่าย <span id="kid-display-rider-sum">6 ล้าน</span> บาท/ปี</p>
+                        </div>
+                        <div class="plan-price-display">
+                            <div class="price-label">เบี้ยประกันรวมต่อปี</div>
+                            <span class="price-amount" id="kid-total-price">-</span> <span class="price-unit">บาท</span>
+                        </div>
+                    </div>
+                    
+                    <div class="kid-benefits">
+                        <div class="benefit-item">
+                            <div class="benefit-icon" style="color: #FF6B6B;"><i class="fa-solid fa-bed"></i></div>
+                            <div class="benefit-text">
+                                <p>ค่าห้องและอาหาร (ต่อวัน)</p>
+                                <strong id="kid-display-room">6,000 บาท</strong>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <div class="benefit-icon" style="color: #4ECDC4;"><i class="fa-solid fa-stethoscope"></i></div>
+                            <div class="benefit-text">
+                                <p>ค่ารักษา OPD (ต่อปี)</p>
+                                <strong id="kid-display-opd">10,000 บาท</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="coverage-table-container">
+                    <h3 style="margin: 0 0 15px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-star" style="color: #e86614;"></i> สรุปผลประโยชน์ความคุ้มครอง</h3>
+                    <table class="coverage-table">
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-bed-pulse"></i> <span class="section-title">หมวดผู้ป่วยใน (IPD)</span></td></tr>
+                        <tr><td>ผลประโยชน์สูงสุด (ต่อปีกรมธรรม์)</td><td id="kid-tbl-max-limit" style="font-size: 18px;">6,000,000</td></tr>
+                        <tr><td>ค่าห้องและค่าอาหาร (ต่อวัน)</td><td id="kid-tbl-room">6,000</td></tr>
+                        <tr><td>ค่าห้อง ICU / ค่าแพทย์ / ค่าผ่าตัด / ฉุกเฉิน</td><td>จ่ายตามจริง</td></tr>
+                        
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-stethoscope"></i> <span class="section-title">หมวดผู้ป่วยนอก (OPD)</span></td></tr>
+                        <tr><td>ค่ารักษาพยาบาลผู้ป่วยนอก (ต่อปี)</td><td id="kid-tbl-opd">10,000</td></tr>
+                        <tr><td>ค่าล้างไต / รักษามะเร็ง (รวม Targeted Therapy)</td><td>จ่ายตามจริง</td></tr>
+                        
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-heart-pulse"></i> <span class="section-title">เพิ่มเติมกรณีป่วย 3 โรคร้ายแรงสำหรับเด็ก</span></td></tr>
+                        <tr><td>เงินชดเชยกรณีป่วยด้วย 3 โรคร้ายแรง</td><td id="kid-tbl-ci-money">50,000</td></tr>
+                        <tr><td>ค่าห้องและอาหารเพิ่มเติม (ต่อวัน)</td><td id="kid-tbl-ci-room">6,000</td></tr>
+                        
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-notes-medical"></i> <span class="section-title">ผลประโยชน์เพิ่มเติมอื่นๆ</span></td></tr>
+                        <tr><td>ค่ารักษาโดยแพทย์ทางเลือก (ต่อปี)</td><td id="kid-tbl-alt-med">-</td></tr>
+                        <tr><td>ค่าใช้จ่ายกรณีเกิดภาวะแทรกซ้อนขณะตั้งครรภ์</td><td>จ่ายตามจริง</td></tr>
+                    </table>
+                    <div style="font-size: 13px; color: var(--text-grey); padding-top: 15px; margin-top: 15px; border-top: 1px dashed var(--border-color);">
+                        * 3 โรคร้ายแรงสำหรับเด็ก ได้แก่ โรคไข้เลือดออกเดงกีที่มีภาวะช็อก, โรควัณโรคสมองหรือเยื่อหุ้มสมอง, โรคหอบหืดระดับรุนแรงมาก
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="health-res-prema" class="health-sub-view">
+                <div class="header-right"><h2>สรุปแผนความคุ้มครอง (Prima Care)</h2></div>
+                <div class="plan-card" style="margin-bottom: 20px;">
+                    <div class="plan-header">
+                        <div class="plan-title">
+                            <h3>FWD Prima Care</h3>
+                            <p id="prema-display-plan-sub">แผน L (ห้อง 4,500)</p>
+                        </div>
+                        <div class="plan-price-display">
+                            <div class="price-label">เบี้ยประกันรวมต่อปี</div>
+                            <span class="price-amount" id="prema-total-price">-</span> <span class="price-unit">บาท</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="coverage-table-container">
+                    <table class="coverage-table">
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-house-medical"></i> <span class="section-title">หมวดที่ 1-5: ผู้ป่วยใน (IPD)</span></td></tr>
+                        <tr><td>ค่าห้อง และค่าอาหาร (ต่อวัน)</td><td id="prema-tbl-room">-</td></tr>
+                        <tr><td>ค่าห้อง ICU (ต่อวัน)</td><td id="prema-tbl-icu">-</td></tr>
+                        <tr><td>ค่าบริการทางการแพทย์อื่นๆ (ต่อครั้ง)</td><td id="prema-tbl-treat">-</td></tr>
+                        <tr><td>ค่าผ่าตัดและหัตถการ (ต่อครั้ง)</td><td id="prema-tbl-surg">-</td></tr>
+                        <tr><td>ค่าแพทย์ตรวจรักษา (ต่อวัน)</td><td id="prema-tbl-doctor">-</td></tr>
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-bolt"></i> <span class="section-title">หมวดอุบัติเหตุ/ผ่าตัดเล็ก</span></td></tr>
+                        <tr><td>อุบัติเหตุฉุกเฉิน 24 ชม. (ต่อครั้ง)</td><td id="prema-tbl-acc">-</td></tr>
+                        <tr><td>ค่าผ่าตัดเล็ก (Minor Surgery)</td><td id="prema-tbl-minor">-</td></tr>
+                        <tr class="table-section"><td colspan="2"><i class="fa-solid fa-star"></i> <span class="section-title">พิเศษ! 3 โรคร้ายแรง</span></td></tr>
+                        <tr><td>วงเงินเพิ่มกรณีป่วย มะเร็ง/หัวใจ/หลอดเลือดสมอง</td><td id="prema-tbl-ci">-</td></tr>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="premium-sticky-bar">
+    <div class="sticky-inner">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img id="sticky-avatar" src="male.png" alt="Avatar" class="sticky-avatar">
+            <div>
+                <div class="sticky-plan-name" id="sticky-plan-name">แผนสร้างมรดก + 50 โรคร้ายแรง</div>
+                <div class="sticky-detail" id="sticky-detail">ทุนชีวิต 200,000 บาท | โรคร้ายแรง 2,000,000 บาท</div>
+            </div>
+        </div>
+        <div class="sticky-price-box">
+            <div class="sticky-price-label">เบี้ยรวมต่อปี</div>
+            <div class="sticky-price"><span id="sticky-total-price">-</span> <span style="font-size: 16px; font-weight: 500; color:var(--text-grey);">บาท</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ================= DATA =================
+    // SAVINGS DATA
+    const rateTableMain = {
+        16:{male:1710,female:1330},17:{male:1750,female:1380},18:{male:1790,female:1410},19:{male:1830,female:1460},20:{male:1870,female:1490},21:{male:1930,female:1530},22:{male:1980,female:1570},23:{male:2040,female:1610},24:{male:2040,female:1650},25:{male:2090,female:1710},26:{male:2150,female:1750},27:{male:2200,female:1780},28:{male:2260,female:1830},29:{male:2310,female:1880},30:{male:2370,female:1940},31:{male:2420,female:1990},32:{male:2480,female:2060},33:{male:2530,female:2110},34:{male:2590,female:2180},35:{male:2640,female:2230},36:{male:2750,female:2310},37:{male:2810,female:2380},38:{male:2860,female:2450},39:{male:2920,female:2520},40:{male:3000,female:2600},41:{male:3080,female:2670},42:{male:3190,female:2730},43:{male:3300,female:2840},44:{male:3410,female:2920},45:{male:3470,female:3000},46:{male:3580,female:3080},47:{male:3690,female:3190},48:{male:3800,female:3280},49:{male:3910,female:3390},50:{male:4020,female:3490},51:{male:4130,female:3590},52:{male:4290,female:3740},53:{male:4400,female:3840},54:{male:4620,female:4020},55:{male:4730,female:4180},56:{male:4950,female:4350},57:{male:5170,female:4510},58:{male:5340,female:4680},59:{male:5500,female:4840},60:{male:5720,female:5010},61:{male:5940,female:5170},62:{male:6220,female:5390},63:{male:6440,female:5560},64:{male:6710,female:5780},65:{male:6990,female:6000}
+    };
+    const rateTableCI = {
+        16:{male:164,female:120},17:{male:176,female:118},18:{male:183,female:114},19:{male:188,female:110},20:{male:188,female:108},21:{male:194,female:108},22:{male:197,female:112},23:{male:202,female:117},24:{male:208,female:124},25:{male:214,female:133},26:{male:217,female:140},27:{male:225,female:151},28:{male:232,female:162},29:{male:239,female:172},30:{male:248,female:185},31:{male:260,female:201},32:{male:276,female:222},33:{male:296,female:248},34:{male:320,female:278},35:{male:346,female:310},36:{male:377,female:345},37:{male:405,female:376},38:{male:434,female:404},39:{male:466,female:431},40:{male:498,female:458},41:{male:539,female:480},42:{male:582,female:515},43:{male:632,female:553},44:{male:687,female:596},45:{male:749,female:644},46:{male:817,female:700},47:{male:882,female:753},48:{male:947,female:804},49:{male:1016,female:856},50:{male:1091,female:903},51:{male:1149,female:954},52:{male:1238,female:988},53:{male:1340,female:1015},54:{male:1454,female:1041},55:{male:1584,female:1072},56:{male:1748,female:1135},57:{male:1933,female:1222},58:{male:2130,female:1307},59:{male:2323,female:1415},60:{male:2579,female:1570},61:{male:2907,female:1767},62:{male:3233,female:1977},63:{male:3599,female:2168},64:{male:4012,female:2373},65:{male:4640,female:2769}
+    };
+
+    // ADULT HEALTH DATA
+    const hlthPlanDetails = {
+        bronze:{name:'Bronze',limit:1000000,room:2500,opd:3000,ciMoney:'-',ciRoom:'-',dental:'-',healthCheck:'-',altMed:'-',maternity:'-',deductAmount:30000},
+        silver:{name:'Silver',limit:3000000,room:4000,opd:5000,ciMoney:'-',ciRoom:'-',dental:'-',healthCheck:'-',altMed:'-',maternity:'-',deductAmount:30000},
+        gold:{name:'Gold',limit:6000000,room:6000,opd:10000,ciMoney:50000,ciRoom:6000,dental:'-',healthCheck:'-',altMed:'-',maternity:'-',deductAmount:50000},
+        platinum:{name:'Platinum',limit:12000000,room:8000,opd:18000,ciMoney:50000,ciRoom:8000,dental:'-',healthCheck:'-',altMed:5000,maternity:'-',deductAmount:50000},
+        sapphire:{name:'Sapphire',limit:40000000,room:12000,opd:60000,ciMoney:100000,ciRoom:12000,dental:6000,healthCheck:6000,altMed:10000,maternity:100000,deductAmount:100000},
+        diamond:{name:'Diamond',limit:100000000,room:25000,opd:'จ่ายตามจริง',ciMoney:100000,ciRoom:25000,dental:15000,healthCheck:15000,altMed:20000,maternity:200000,deductAmount:100000}
+    };
+    const hlthMilestoneAges = [20,25,30,35,40,45,50,55,60];
+    const hlthRateDB = {
+        baseM:[14.00,15.70,17.85,20.60,24.13,28.74,34.84,43.14,54.84],
+        baseF:[11.91,13.31,15.07,17.31,20.19,23.95,28.96,35.81,45.49],
+        nonDeduct:{
+            bronze:[18558,18131,19030,20620,21841,23955,26417,33499,42624],
+            silver:[26044,26158,28063,29169,29766,34011,40077,46194,53831],
+            gold:[30282,30269,32197,33639,34384,38618,45096,52074,60736],
+            platinum:[36541,36358,37789,40548,44925,49079,56841,66434,77126],
+            sapphire:[57626,59695,63373,65176,66869,73831,85765,100672,118096],
+            diamond:[67619,69529,73754,76413,79155,88149,103100,121734,143446]
+        },
+        deduct:{
+            bronze:[8771,7447,7245,8632,10124,11775,14130,21454,32688],
+            silver:[11629,10159,10267,11978,13275,16311,20234,28533,42152],
+            gold:[13338,11728,12262,13253,14025,18062,23697,33028,48322],
+            platinum:[15780,13606,12929,14251,18176,22280,28764,40182,57077],
+            sapphire:[36689,36656,37240,37511,39079,45022,55811,69694,90601],
+            diamond:[42307,41435,41739,42569,47260,54681,67460,85492,112578]
+        }
+    };
+
+    // KIDS HEALTH DATA
+    const kidPlanDetails = {
+        'bronze': { name: 'Bronze', icon: '🧸', limit: 1000000, limitText: '1 ล้าน', room: 2500, opdKid: 3000, ciMoney: '-', ciRoom: '-', deductibles: [15000, 30000] },
+        'silver': { name: 'Silver', icon: '🚗', limit: 3000000, limitText: '3 ล้าน', room: 4000, opdKid: 5000, ciMoney: '-', ciRoom: '-', deductibles: [15000, 30000] },
+        'gold': { name: 'Gold', icon: '👑', limit: 6000000, limitText: '6 ล้าน', room: 6000, opdKid: 10000, ciMoney: 50000, ciRoom: 6000, deductibles: [25000, 50000] },
+        'platinum': { name: 'Platinum', icon: '🚀', limit: 12000000, limitText: '12 ล้าน', room: 8000, opdKid: 18000, ciMoney: 50000, ciRoom: 8000, deductibles: [0, 25000, 50000] }
+    };
+    const kidRates = {
+        'bronze': { '15000': { '0-1': 53992, '2-3': 48942, '4-5': 40387 }, '30000': { '0-1': 37031, '2-3': 32275, '4-5': 25262 } },
+        'silver': { '15000': { '0-1': 75897, '2-3': 69823, '4-5': 58683 }, '30000': { '0-1': 55155, '2-3': 49207, '4-5': 39750 } },
+        'gold': { '25000': { '0-1': 108070, '2-3': 97742, '4-5': 77742 }, '50000': { '0-1': 85536, '2-3': 76477, '4-5': 59340 } },
+        'platinum': { '0': { '0-1': 172408, '2-3': 154088, '4-5': 124583 }, '25000': { '0-1': 137577, '2-3': 121282, '4-5': 96240 }, '50000': { '0-1': 108889, '2-3': 94213, '4-5': 72815 } }
+    };
+
+    // PRIMA CARE DATA
+    const premaPlanConfig = {
+        's': { name: 'S', room: 1500, icu: 3000, treat: 15000, surg: 60000, doctor: 1000, acc: 5000, minor: 5000, ci: 60000 },
+        'm': { name: 'M', room: 3000, icu: 6000, treat: 25000, surg: 100000, doctor: 1000, acc: 7500, minor: 6000, ci: 100000 },
+        'l': { name: 'L', room: 4500, icu: 9000, treat: 35000, surg: 120000, doctor: 1000, acc: 10000, minor: 7000, ci: 120000 },
+        'xl': { name: 'XL', room: 6000, icu: 12000, treat: 50000, surg: 150000, doctor: 1500, acc: 15000, minor: 8000, ci: 150000 },
+        'xxl': { name: 'XXL', room: 7500, icu: 15000, treat: 65000, surg: 180000, doctor: 1500, acc: 20000, minor: 10000, ci: 180000 }
+    };
+
+    const premaRateDB = {
+        '12': {
+            male: { s: [14900, 10500, 5800, 5300, 6300, 6800, 7900, 10500, 13100, 18300, 23500], m: [22900, 17000, 9400, 8500, 10200, 11100, 12800, 17000, 21200, 29700, 38200], l: [33300, 24700, 13600, 12400, 14800, 16000, 18500, 24700, 30800, 43100, 55400], xl: [43900, 34500, 19000, 17300, 20700, 22400, 25900, 34500, 43100, 60300, 77500], xxl: [55900, 43900, 24200, 22000, 26300, 28500, 32900, 43900, 54800, 76700, 98600] },
+            female: { s: [14900, 10500, 5800, 6800, 8200, 8900, 10200, 11500, 14400, 18300, 23500], m: [22900, 17000, 9400, 11100, 13300, 14400, 16600, 18700, 23300, 29700, 38200], l: [33300, 24700, 13600, 16000, 19200, 20800, 24000, 27100, 33900, 43100, 55400], xl: [43900, 34500, 19000, 22400, 26900, 29100, 33600, 37900, 47400, 60300, 77500], xxl: [55900, 43900, 24200, 28500, 34200, 37100, 42800, 48300, 60300, 76700, 98600] }
+        },
+        '3': {
+            male: { s: [19370, 13650, 7540, 6890, 8190, 8840, 10270, 13650, 17030, 23790, 30550], m: [29770, 22100, 12220, 11050, 13260, 14430, 16640, 22100, 27560, 38610, 49660], l: [43290, 32110, 17680, 16120, 19240, 20800, 24050, 32110, 40040, 56030, 72020], xl: [57070, 44850, 24700, 22490, 26910, 29120, 33670, 44850, 56030, 78390, 100750], xxl: [72670, 57070, 31460, 28600, 34190, 37050, 42770, 57070, 71240, 99710, 128180] },
+            female: { s: [19370, 13650, 7540, 8840, 10660, 11570, 13260, 14950, 18720, 23790, 30550], m: [29770, 22100, 12220, 14430, 17290, 18720, 21580, 24310, 30290, 38610, 49660], l: [43290, 32110, 17680, 20800, 24960, 27040, 31200, 35230, 44070, 56030, 72020], xl: [57070, 44850, 24700, 29120, 34970, 37830, 43680, 49270, 61620, 78390, 100750], xxl: [72670, 57070, 31460, 37050, 44460, 48230, 55640, 62790, 78390, 99710, 128180] }
+        },
+        '4': {
+            male: { s: [21605, 15225, 8410, 7685, 9135, 9860, 11455, 15225, 18995, 26535, 34075], m: [33205, 24650, 13630, 12325, 14790, 16095, 18560, 24650, 30740, 43065, 55390], l: [48285, 35815, 19720, 17980, 21460, 23200, 26825, 35815, 44660, 62495, 80330], xl: [63655, 50025, 27550, 25085, 30015, 32480, 37555, 50025, 62495, 87435, 112375], xxl: [81055, 63655, 35090, 31900, 38135, 41325, 47705, 63655, 79460, 111215, 142970] },
+            female: { s: [21605, 15225, 8410, 9860, 11890, 12905, 14790, 16675, 20880, 26535, 34075], m: [33205, 24650, 13630, 16095, 19285, 20880, 24070, 27115, 33785, 43065, 55390], l: [48285, 35815, 19720, 23200, 27840, 30160, 34800, 39295, 49155, 62495, 80330], xl: [63655, 50025, 27550, 32480, 39005, 42195, 48720, 54955, 68730, 87435, 112375], xxl: [81055, 63655, 35090, 41325, 49590, 53795, 62060, 70035, 87435, 111215, 142970] }
+        }
+    };
+
+
+    // ================= STATE =================
+    let currentView = 'savings'; 
+    let currentHealthSubView = 'precious'; 
+    
+    // Savings State
+    let savGender = 'male'; let savPlanId = 2; let savMainSum = 200000; let savCiSum = 2000000;
+    
+    // Adult Health State
+    let hlthGender = 'male'; let hlthPlanId = 'gold'; let hlthIsDeduct = false;
+    
+    // Kids Health State
+    let kidGender = 'male'; let kidAgeBracket = '0-1'; let kidPlanId = 'gold'; let kidDeductible = 25000;
+
+    // Prima Care State
+    let premaGender = 'male'; let premaPlanId = 'l'; let premaOcc = '12';
+
+
+    // ================= UTILS =================
+    function formatNumber(num) {
+        if (typeof num === 'string') return num;
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    function parseNumber(str) {
+        return parseInt(String(str).replace(/,/g, ''), 10) || 0;
+    }
+    function getPremaAgeIndex(a) {
+        if(a <= 5) return 0; if(a <= 10) return 1; if(a <= 15) return 2; if(a <= 35) return 3;
+        if(a <= 40) return 4; if(a <= 45) return 5; if(a <= 50) return 6; if(a <= 55) return 7;
+        if(a <= 60) return 8; if(a <= 65) return 9; return 10;
+    }
+
+
+    // ================= VIEW NAVIGATION =================
+    function switchView(viewName) {
+        currentView = viewName;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        document.getElementById(`tab-${viewName}`).classList.add('active');
+        document.getElementById(`view-${viewName}`).classList.add('active');
+        document.getElementById(`result-${viewName}`).classList.add('active');
+        if (viewName === 'savings') calculateSavings();
+        if (viewName === 'health') triggerHealthCalculations();
+        updateStickyBar();
+    }
+
+    function manualSwitchView(viewName) {
+        switchView(viewName);
+        if (isVoiceActive) speak(viewName === 'savings' ? "เปิดแผนประกันสร้างมรดกและ 50 โรคร้ายแรงให้แล้วค่ะ" : "เปิดหมวดหมู่ประกันสุขภาพให้แล้วค่ะ");
+    }
+
+    function switchHealthSubView(subView) {
+        currentHealthSubView = subView;
+        
+        // Update Buttons
+        document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`sub-btn-${subView}`).classList.add('active');
+        
+        // Hide all sub-views, show target
+        document.querySelectorAll('.health-sub-view').forEach(v => v.classList.remove('active'));
+        document.getElementById(`health-sub-${subView}`).classList.add('active');
+        document.getElementById(`health-res-${subView}`).classList.add('active');
+        
+        triggerHealthCalculations();
+        updateStickyBar();
+    }
+
+    function triggerHealthCalculations() {
+        if (currentHealthSubView === 'precious') calculateHealth();
+        if (currentHealthSubView === 'kids') calculateKids();
+        if (currentHealthSubView === 'prema') calculatePrema();
+    }
+
+
+    // ================= STICKY BAR =================
+    function updateStickyBar() {
+        const planName = document.getElementById('sticky-plan-name');
+        const detail = document.getElementById('sticky-detail');
+        const totalPrice = document.getElementById('sticky-total-price');
+        const avatarImg = document.getElementById('sticky-avatar');
+        let currentGender = 'male';
+
+        if (currentView === 'savings') {
+            currentGender = savGender;
+            planName.innerText = 'แผนสร้างมรดก + 50 โรคร้ายแรง';
+            detail.innerText = `ทุนชีวิต ${formatNumber(savMainSum)} บาท | โรคร้ายแรง ${formatNumber(savCiSum)} บาท`;
+            totalPrice.innerText = document.getElementById('sav-total-price').innerText;
+        } else if (currentView === 'health') {
+            if (currentHealthSubView === 'precious') {
+                currentGender = hlthGender;
+                const pInfo = hlthPlanDetails[hlthPlanId];
+                planName.innerText = `Precious Protection - ${pInfo.name}`;
+                detail.innerText = `เหมาจ่าย ${formatNumber(pInfo.limit)} บาท/ปี${hlthIsDeduct ? ` | ส่วนแรก ${formatNumber(pInfo.deductAmount)} บาท/ครั้ง` : ''}`;
+                totalPrice.innerText = document.getElementById('hlth-total-price').innerText;
+            } else if (currentHealthSubView === 'kids') {
+                currentGender = kidGender;
+                const pInfo = kidPlanDetails[kidPlanId];
+                let deductStr = kidDeductible === 0 ? 'ไม่จ่ายส่วนแรก' : `ส่วนแรก ${formatNumber(kidDeductible)} บ.`;
+                let ageStr = kidAgeBracket === '0-1' ? '1ด.-1ปี' : (kidAgeBracket === '2-3' ? '2-3ปี' : '4-5ปี');
+                planName.innerText = `${pInfo.icon} Precious Care Kids - แผน ${pInfo.name}`;
+                detail.innerText = `อายุ ${ageStr} | ${deductStr}`;
+                totalPrice.innerText = document.getElementById('kid-total-price').innerText;
+            } else if (currentHealthSubView === 'prema') {
+                currentGender = premaGender;
+                const pInfo = premaPlanConfig[premaPlanId];
+                planName.innerText = `FWD Prima Care - แผน ${pInfo.name}`;
+                detail.innerText = `ค่าห้อง ${formatNumber(pInfo.room)} บ/วัน | อาชีพขั้น ${premaOcc === '12' ? '1-2' : premaOcc}`;
+                totalPrice.innerText = document.getElementById('prema-total-price').innerText;
+            }
+        }
+        
+        avatarImg.src = currentGender === 'male' ? 'male.png' : 'female.png';
+    }
+
+
+    // ================= SAVINGS LOGIC =================
+    function setSavGender(g) { savGender = g; document.getElementById('sav-btn-male').classList.remove('active'); document.getElementById('sav-btn-female').classList.remove('active'); document.getElementById(`sav-btn-${g}`).classList.add('active'); calculateSavings(); }
+    function selectSavPlan(id) {
+        savPlanId = id; document.querySelectorAll('#view-savings .plan-opt-btn').forEach(btn => btn.classList.remove('active'));
+        if (id > 0) {
+            document.getElementById(`sav-plan-${id}`).classList.add('active');
+            savMainSum = 200000;
+            if (id === 1) savCiSum = 1000000; if (id === 2) savCiSum = 2000000; if (id === 3) savCiSum = 3000000; if (id === 4) savCiSum = 5000000; if (id === 5) savCiSum = 10000000;
+        }
+        updateSavSlidersUI(); calculateSavings();
+    }
+    function handleSavMainSlider(val) { savPlanId = 0; savMainSum = parseInt(val, 10); document.querySelectorAll('#view-savings .plan-opt-btn').forEach(b => b.classList.remove('active')); updateSavSlidersUI(); calculateSavings(); }
+    function handleSavMainManual(val) { let num = parseNumber(val); if (num < 200000) num = 200000; if (num > 10000000) num = 10000000; handleSavMainSlider(num); }
+    function handleSavCISlider(val) { savPlanId = 0; savCiSum = parseInt(val, 10); document.querySelectorAll('#view-savings .plan-opt-btn').forEach(b => b.classList.remove('active')); updateSavSlidersUI(); calculateSavings(); }
+    function handleSavCIManual(val) { let num = parseNumber(val); if (num < 500000) num = 500000; if (num > 10000000) num = 10000000; handleSavCISlider(num); }
+    function updateSavSlidersUI() { document.getElementById('sav-main-slider').value = savMainSum; document.getElementById('sav-main-display').value = formatNumber(savMainSum); document.getElementById('sav-ci-slider').value = savCiSum; document.getElementById('sav-ci-display').value = formatNumber(savCiSum); }
+
+    function calculateSavings() {
+        if (currentView !== 'savings') return;
+        const age = parseInt(document.getElementById('sav-age-input').value, 10) || 0;
+        const errBox = document.getElementById('sav-sum-error');
+
+        if (age < 16 || age > 65) {
+            errBox.innerText = "*แผนสร้างมรดก 50 โรคร้ายแรงรับประกันตั้งแต่อายุ 16 - 65 ปี"; errBox.style.display = 'block'; document.getElementById('sav-total-price').innerText = "-"; updateStickyBar(); return;
+        }
+
+        errBox.style.display = 'none';
+        const planTitles = {1:"แผน 1.2 ล้าน",2:"แผน 2.2 ล้าน",3:"แผน 3.2 ล้าน",4:"แผน 5.2 ล้าน",5:"แผน 10.2 ล้าน"};
+        document.getElementById('sav-display-plan-sub').innerText = savPlanId > 0 ? planTitles[savPlanId] : "แผนปรับแต่งเอง";
+        document.getElementById('sav-display-main-sum').innerText = formatNumber(savMainSum);
+        document.getElementById('sav-display-ci-sum').innerText = formatNumber(savCiSum);
+
+        const rMain = rateTableMain[age] ? rateTableMain[age][savGender] : 0;
+        const pMain = Math.ceil(rMain * (savMainSum / 100000));
+        const rCi = rateTableCI[age] ? rateTableCI[age][savGender] : 0;
+        const pCi = Math.ceil(rCi * (savCiSum / 100000));
+
+        document.getElementById('sav-main-price').innerText = formatNumber(pMain) + " บาท"; document.getElementById('sav-ci-price').innerText = formatNumber(pCi) + " บาท"; document.getElementById('sav-total-price').innerText = formatNumber(pMain + pCi);
+        document.getElementById('sav-tbl-early-stage').innerText = formatNumber(savCiSum * 0.2); document.getElementById('sav-tbl-last-stage-1').innerText = formatNumber(savCiSum); document.getElementById('sav-tbl-last-stage-2').innerText = formatNumber(savCiSum * 0.8);
+        document.getElementById('sav-tbl-death-1').innerText = formatNumber(savMainSum + savCiSum); document.getElementById('sav-tbl-death-2').innerText = formatNumber(savMainSum + (savCiSum * 0.8)); document.getElementById('sav-tbl-death-3').innerText = formatNumber(savMainSum); document.getElementById('sav-tbl-maturity').innerText = formatNumber(savMainSum);
+        updateStickyBar();
+    }
+
+
+    // ================= ADULT HEALTH LOGIC =================
+    function interpolateRate(age, array) {
+        if (age <= 20) return array[0]; if (age >= 60) return array[8];
+        for (let i = 0; i < hlthMilestoneAges.length - 1; i++) {
+            if (age >= hlthMilestoneAges[i] && age <= hlthMilestoneAges[i + 1]) {
+                const range = hlthMilestoneAges[i + 1] - hlthMilestoneAges[i]; const progress = (age - hlthMilestoneAges[i]) / range;
+                return array[i] + progress * (array[i + 1] - array[i]);
+            }
+        }
+        return array[0];
+    }
+    function setHlthGender(g) { hlthGender = g; document.getElementById('hlth-btn-male').classList.remove('active'); document.getElementById('hlth-btn-female').classList.remove('active'); document.getElementById(`hlth-btn-${g}`).classList.add('active'); calculateHealth(); }
+    function setHlthDeductible(state) { hlthIsDeduct = state; document.getElementById('hlth-btn-nondeduct').classList.remove('active'); document.getElementById('hlth-btn-deduct').classList.remove('active'); document.getElementById(state ? 'hlth-btn-deduct' : 'hlth-btn-nondeduct').classList.add('active'); document.getElementById('hlth-deduct-display').style.display = state ? 'flex' : 'none'; calculateHealth(); }
+    function selectHlthPlan(id) { hlthPlanId = id; document.querySelectorAll('#health-sub-precious .plan-opt-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(`hlth-plan-${id}`).classList.add('active'); calculateHealth(); }
+
+    function calculateHealth() {
+        if (currentView !== 'health' || currentHealthSubView !== 'precious') return;
+        const age = parseInt(document.getElementById('hlth-age-input').value, 10) || 0;
+        const errBox = document.getElementById('hlth-sum-error');
+
+        if (age < 1 || age > 75) { errBox.innerText = "*แผนสุขภาพรับประกันอายุ 1 เดือน - 75 ปี"; errBox.style.display = 'block'; document.getElementById('hlth-total-price').innerText = "-"; updateStickyBar(); return; }
+        if (age < 11 && (hlthPlanId === 'sapphire' || hlthPlanId === 'diamond')) { errBox.innerText = "*แผน Sapphire และ Diamond รับประกัน 11 ปีขึ้นไป"; errBox.style.display = 'block'; document.getElementById('hlth-total-price').innerText = "-"; updateStickyBar(); return; }
+
+        errBox.style.display = 'none';
+        const pInfo = hlthPlanDetails[hlthPlanId];
+        document.getElementById('hlth-display-plan-sub').innerText = `แผน ${pInfo.name} (เหมาจ่าย ${formatNumber(pInfo.limit)})`; document.getElementById('hlth-display-rider-sum').innerText = formatNumber(pInfo.limit); document.getElementById('hlth-display-deduct-amount').innerText = formatNumber(pInfo.deductAmount);
+        document.getElementById('hlth-tbl-max-limit').innerText = formatNumber(pInfo.limit); document.getElementById('hlth-tbl-room').innerText = formatNumber(pInfo.room); document.getElementById('hlth-tbl-opd').innerText = formatNumber(pInfo.opd); document.getElementById('hlth-tbl-ci-money').innerText = formatNumber(pInfo.ciMoney); document.getElementById('hlth-tbl-ci-room').innerText = formatNumber(pInfo.ciRoom); document.getElementById('hlth-tbl-health-check').innerText = formatNumber(pInfo.healthCheck); document.getElementById('hlth-tbl-dental').innerText = formatNumber(pInfo.dental); document.getElementById('hlth-tbl-alt-med').innerText = formatNumber(pInfo.altMed); document.getElementById('hlth-tbl-maternity').innerText = formatNumber(pInfo.maternity);
+
+        const rateMainArray = hlthGender === 'male' ? hlthRateDB.baseM : hlthRateDB.baseF;
+        const pMain = Math.ceil((interpolateRate(age, rateMainArray) * 60000) / 1000);
+        const riderDbRef = hlthIsDeduct ? hlthRateDB.deduct[hlthPlanId] : hlthRateDB.nonDeduct[hlthPlanId];
+        const pRider = Math.round(interpolateRate(age, riderDbRef));
+        
+        document.getElementById('hlth-main-price').innerText = formatNumber(pMain) + " บาท"; document.getElementById('hlth-rider-price').innerText = formatNumber(pRider) + " บาท"; document.getElementById('hlth-total-price').innerText = formatNumber(pMain + pRider);
+        updateStickyBar();
+    }
+
+
+    // ================= KIDS HEALTH LOGIC =================
+    function setKidGender(g) { kidGender = g; document.getElementById('kid-btn-male').classList.remove('active'); document.getElementById('kid-btn-female').classList.remove('active'); document.getElementById(`kid-btn-${g}`).classList.add('active'); calculateKids(); }
+    
+    function setKidAge(bracket) {
+        kidAgeBracket = bracket;
+        document.querySelectorAll('.btn-age-kid').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        calculateKids();
+    }
+
+    function selectKidPlan(planId) {
+        kidPlanId = planId;
+        document.querySelectorAll('#health-sub-kids .plan-opt-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`kid-plan-${planId}`).classList.add('active');
+        renderKidDeductibles();
+    }
+
+    function renderKidDeductibles() {
+        const container = document.getElementById('deductible-container');
+        container.innerHTML = '';
+        const deducts = kidPlanDetails[kidPlanId].deductibles;
+        
+        if(!deducts.includes(kidDeductible)) kidDeductible = deducts[0];
+
+        deducts.forEach(val => {
+            const btn = document.createElement('div');
+            btn.className = `btn-deduct ${val === kidDeductible ? 'active' : ''}`;
+            let valText = val === 0 ? 'ไม่มีความรับผิดส่วนแรก' : `รับผิดส่วนแรก ${formatNumber(val)} บาท/ครั้ง`;
+            let descText = val === 0 ? 'คุ้มครองตั้งแต่บาทแรก' : 'ประหยัดค่าเบี้ยประกัน';
+
+            btn.innerHTML = `
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <i class="fa-regular ${val === kidDeductible ? 'fa-circle-check' : 'fa-circle'}"></i>
+                    <span class="deduct-val">${valText}</span>
+                </div>
+                <span class="deduct-desc">${descText}</span>
+            `;
+            btn.onclick = () => { kidDeductible = val; renderKidDeductibles(); };
+            container.appendChild(btn);
+        });
+
+        calculateKids();
+    }
+
+    function calculateKids() {
+        if (currentView !== 'health' || currentHealthSubView !== 'kids') return;
+        let planInfo = kidPlanDetails[kidPlanId];
+        
+        document.getElementById('kid-display-icon').innerText = planInfo.icon;
+        document.getElementById('kid-display-plan-name').innerText = planInfo.name;
+        document.getElementById('kid-display-rider-sum').innerText = planInfo.limitText;
+        document.getElementById('kid-display-room').innerText = formatNumber(planInfo.room) + " บาท";
+        document.getElementById('kid-display-opd').innerText = formatNumber(planInfo.opdKid) + " บาท";
+
+        document.getElementById('kid-tbl-max-limit').innerText = formatNumber(planInfo.limit);
+        document.getElementById('kid-tbl-room').innerText = formatNumber(planInfo.room);
+        document.getElementById('kid-tbl-opd').innerText = formatNumber(planInfo.opdKid);
+        document.getElementById('kid-tbl-ci-money').innerText = formatNumber(planInfo.ciMoney);
+        document.getElementById('kid-tbl-ci-room').innerText = formatNumber(planInfo.ciRoom);
+        document.getElementById('kid-tbl-alt-med').innerText = planInfo.name === 'Platinum' ? '5,000' : '-';
+
+        let price = kidRates[kidPlanId][kidDeductible.toString()][kidAgeBracket];
+        document.getElementById('kid-total-price').innerText = formatNumber(price);
+        updateStickyBar();
+    }
+
+
+    // ================= PRIMA CARE LOGIC =================
+    function setPremaGender(g) { premaGender = g; document.getElementById('prema-btn-male').classList.remove('active'); document.getElementById('prema-btn-female').classList.remove('active'); document.getElementById(`prema-btn-${g}`).classList.add('active'); calculatePrema(); }
+    
+    function setPremaOcc(o) { 
+        premaOcc = o; 
+        ['12','3','4'].forEach(v => document.getElementById('prema-occ-' + v).classList.toggle('active', o === v)); 
+        calculatePrema(); 
+    }
+    
+    function setPremaPlan(p) { 
+        premaPlanId = p; 
+        document.querySelectorAll('.prema-plan-card').forEach(c => c.classList.remove('active'));
+        document.getElementById(`prema-plan-${p}`).classList.add('active');
+        calculatePrema(); 
+    }
+
+    function calculatePrema() {
+        if (currentView !== 'health' || currentHealthSubView !== 'prema') return;
+        const age = parseInt(document.getElementById('prema-age-input').value, 10) || 0;
+        const errBox = document.getElementById('prema-sum-error');
+
+        if (age < 1 || age > 70) {
+            errBox.innerText = "*แผน Prima Care รับประกันตั้งแต่อายุ 1 - 70 ปี";
+            errBox.style.display = 'block';
+            document.getElementById('prema-total-price').innerText = "-";
+            updateStickyBar();
+            return;
+        }
+        
+        errBox.style.display = 'none';
+
+        const idx = getPremaAgeIndex(age);
+        const premium = premaRateDB[premaOcc][premaGender][premaPlanId][idx];
+        const config = premaPlanConfig[premaPlanId];
+
+        document.getElementById('prema-display-plan-sub').innerText = `แผน ${config.name} (ค่าห้อง ${formatNumber(config.room)})`;
+        document.getElementById('prema-total-price').innerText = formatNumber(premium);
+
+        document.getElementById('prema-tbl-room').innerText = formatNumber(config.room);
+        document.getElementById('prema-tbl-icu').innerText = formatNumber(config.icu);
+        document.getElementById('prema-tbl-treat').innerText = formatNumber(config.treat);
+        document.getElementById('prema-tbl-surg').innerText = formatNumber(config.surg);
+        document.getElementById('prema-tbl-doctor').innerText = formatNumber(config.doctor);
+        document.getElementById('prema-tbl-acc').innerText = formatNumber(config.acc);
+        document.getElementById('prema-tbl-minor').innerText = formatNumber(config.minor);
+        document.getElementById('prema-tbl-ci').innerText = formatNumber(config.ci);
+
+        updateStickyBar();
+    }
+
+
+    // ================= VOICE LOGIC =================
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition; let isVoiceActive = false; let isManualStop = true; let femaleThaiVoice = null;
+
+    function setThaiFemaleVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        const thaiVoices = voices.filter(v => v.lang.indexOf('th') >= 0 || v.lang.indexOf('TH') >= 0);
+        if (thaiVoices.length === 0) return;
+        femaleThaiVoice = thaiVoices.find(v => ['premwadee','kanya','lita','หญิง'].some(n => v.name.toLowerCase().includes(n))) || thaiVoices.find(v => v.name.includes('Google')) || thaiVoices[0];
+    }
+    if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = setThaiFemaleVoice; setThaiFemaleVoice(); }
+
+    function speak(text) {
+        if (!('speechSynthesis' in window)) return;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'th-TH'; if (femaleThaiVoice) utterance.voice = femaleThaiVoice;
+        utterance.rate = 0.95; utterance.pitch = 1.45;
+        const wasListening = isVoiceActive;
+        if (wasListening && recognition) recognition.stop();
+        utterance.onend = function() { if (wasListening && recognition && !isManualStop) { setTimeout(() => { try { recognition.start(); } catch(e){} }, 300); } };
+        window.speechSynthesis.speak(utterance);
+    }
+
+    if (typeof SpeechRecognition !== 'undefined') {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'th-TH'; recognition.continuous = true; recognition.interimResults = false;
+        recognition.onstart = function() { isManualStop = false; isVoiceActive = true; document.getElementById('mic-btn').classList.add('listening'); };
+        recognition.onresult = function(event) {
+            const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+            document.getElementById('voice-debug').innerText = "ได้ยินว่า: " + transcript;
+            processVoiceCommand(transcript);
+        };
+        recognition.onerror = function(event) { if (event.error === 'not-allowed') { alert('กรุณาอนุญาตไมโครโฟนครับ'); isManualStop = true; } };
+        recognition.onend = function() { isVoiceActive = false; document.getElementById('mic-btn').classList.remove('listening'); if (!isManualStop) setTimeout(() => { try { recognition.start(); } catch(e){} }, 800); };
+    }
+
+    function toggleVoiceRecognition() {
+        if (!SpeechRecognition) return alert("เบราว์เซอร์ไม่รองรับ แนะนำ Chrome/Safari");
+        if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(" ")); }
+        if (isVoiceActive) { isManualStop = true; recognition.stop(); document.getElementById('voice-debug').innerText = "ปิดระบบรับคำสั่งเสียงแล้ว"; speak("ปิดไมค์แล้วค่ะ"); } 
+        else { isManualStop = false; try { recognition.start(); document.getElementById('voice-debug').innerText = "ลิตากำลังฟัง... พูดคำสั่งได้เลยค่ะ"; speak("สวัสดีค่ะ ลิตาพร้อมให้บริการค่ะ"); } catch(e) {} }
+    }
+
+    function processVoiceCommand(text) {
+        if (text.includes("สวัสดีลิตา") || text.includes("ลิตาครับ") || text.includes("ลิตาคะ")) { speak("สวัสดีค่ะ ต้องการให้ลิตาช่วยคำนวณแผนอะไรดีคะ"); return; }
+        if (text.includes("มรดก") || text.includes("โรคร้ายแรง") || text.includes("แผนเงินออม")) { switchView('savings'); speak("ยินดีค่ะ แจ้งแผนเงินออม หรือรายละเอียดอายุ ได้เลยค่ะ"); return; }
+        
+        if (text.includes("สุขภาพเด็ก") || text.includes("แผนเด็ก") || text.includes("แผนสำหรับเด็ก")) {
+            if (currentView !== 'health') switchView('health');
+            switchHealthSubView('kids');
+            speak("เปิดแผนประกันเด็กให้แล้วค่ะ เลือกระดับอายุและแผนได้เลยค่ะ");
+            return;
+        }
+        
+        if (text.includes("พรีม่าแคร์") || text.includes("prema care") || text.includes("พรีมาแคร์")) {
+            if (currentView !== 'health') switchView('health');
+            switchHealthSubView('prema');
+            speak("เปิดแผนพรีม่าแคร์ให้แล้วค่ะ แจ้งอายุและแพ็กเกจที่ต้องการได้เลยค่ะ");
+            return;
+        }
+        
+        if (text.includes("สุขภาพผู้ใหญ่") || text.includes("สุขภาพ") || text.includes("เหมาจ่าย")) { 
+            switchView('health'); switchHealthSubView('precious'); speak("ยินดีค่ะ แจ้งแผนสุขภาพเหมาจ่ายที่ต้องการได้เลยค่ะ"); return; 
+        }
+        
+        if (text.includes("ปิดเสียง") || text.includes("หยุดฟัง") || text.includes("ปิดไมค์")) { toggleVoiceRecognition(); return; }
+
+        let actionTaken = false;
+        const responseParts = [];
+        
+        if (text.includes("เพศหญิง") || text.includes("ผู้หญิง")) {
+            if (currentView === 'savings') setSavGender('female'); else if(currentHealthSubView === 'precious') setHlthGender('female'); else if(currentHealthSubView === 'kids') setKidGender('female'); else if(currentHealthSubView === 'prema') setPremaGender('female');
+            responseParts.push("ผู้หญิง"); actionTaken = true;
+        } else if (text.includes("เพศชาย") || text.includes("ผู้ชาย")) {
+            if (currentView === 'savings') setSavGender('male'); else if(currentHealthSubView === 'precious') setHlthGender('male'); else if(currentHealthSubView === 'kids') setKidGender('male'); else if(currentHealthSubView === 'prema') setPremaGender('male');
+            responseParts.push("ผู้ชาย"); actionTaken = true;
+        }
+
+        const ageMatch = text.match(/อายุ.*?(\d+)/);
+        if (ageMatch) {
+            const a = parseInt(ageMatch[1], 10);
+            if (currentView === 'savings') { document.getElementById('sav-age-input').value = a; calculateSavings(); } 
+            else if (currentHealthSubView === 'precious') { document.getElementById('hlth-age-input').value = a; calculateHealth(); }
+            else if (currentHealthSubView === 'prema') { document.getElementById('prema-age-input').value = a; calculatePrema(); }
+            responseParts.push(`อายุ ${a} ปี`); actionTaken = true;
+        }
+
+        if (currentView === 'savings') {
+            if (text.includes("แผน 1") || text.includes("แผนหนึ่ง") || text.includes("แผนที่ 1") || text.includes("แผนที่หนึ่ง")) { selectSavPlan(1); responseParts.push("แผน 1"); actionTaken = true; }
+            else if (text.includes("แผน 2") || text.includes("แผนสอง") || text.includes("แผนที่ 2") || text.includes("แผนที่สอง")) { selectSavPlan(2); responseParts.push("แผน 2"); actionTaken = true; }
+            else if (text.includes("แผน 3") || text.includes("แผนสาม") || text.includes("แผนที่ 3") || text.includes("แผนที่สาม")) { selectSavPlan(3); responseParts.push("แผน 3"); actionTaken = true; }
+            else if (text.includes("แผน 4") || text.includes("แผนสี่") || text.includes("แผนที่ 4") || text.includes("แผนที่สี่")) { selectSavPlan(4); responseParts.push("แผน 4"); actionTaken = true; }
+            else if (text.includes("แผน 5") || text.includes("แผนห้า") || text.includes("แผนที่ 5") || text.includes("แผนที่ห้า")) { selectSavPlan(5); responseParts.push("แผน 5"); actionTaken = true; }
+        } else if (currentView === 'health') {
+            
+            let planPrefix = currentHealthSubView;
+            
+            if (planPrefix === 'precious' || planPrefix === 'kids') {
+                if (text.includes("bronze") || text.includes("บรอนซ์") || text.includes("แผน 1")) { 
+                    if(planPrefix === 'kids') selectKidPlan('bronze'); else selectHlthPlan('bronze');
+                    responseParts.push("แผน 1 บรอนซ์"); actionTaken = true; 
+                }
+                else if (text.includes("silver") || text.includes("ซิลเวอร์") || text.includes("แผน 2")) { 
+                    if(planPrefix === 'kids') selectKidPlan('silver'); else selectHlthPlan('silver');
+                    responseParts.push("แผน 2 ซิลเวอร์"); actionTaken = true; 
+                }
+                else if (text.includes("gold") || text.includes("โกล") || text.includes("แผน 3")) { 
+                    if(planPrefix === 'kids') selectKidPlan('gold'); else selectHlthPlan('gold');
+                    responseParts.push("แผน 3 โกลด์"); actionTaken = true; 
+                }
+                else if (text.includes("platinum") || text.includes("แพลตตินั่ม") || text.includes("แพลตตินัม") || text.includes("แผน 4")) { 
+                    if(planPrefix === 'kids') selectKidPlan('platinum'); else selectHlthPlan('platinum');
+                    responseParts.push("แผน 4 แแพลตตินัม"); actionTaken = true; 
+                }
+                else if (planPrefix === 'precious' && (text.includes("sapphire") || text.includes("แซฟไฟร์") || text.includes("แผน 5"))) { selectHlthPlan('sapphire'); responseParts.push("แผน 5 แซฟไฟร์"); actionTaken = true; }
+                else if (planPrefix === 'precious' && (text.includes("diamond") || text.includes("ไดมอน") || text.includes("แผน 6"))) { selectHlthPlan('diamond'); responseParts.push("แผน 6 ไดมอนด์"); actionTaken = true; }
+
+                if (planPrefix === 'precious') {
+                    if (text.includes("มีส่วนร่วมจ่าย")) { setHlthDeductible(true); responseParts.push("แบบมีส่วนร่วมจ่าย"); actionTaken = true; }
+                    else if (text.includes("เหมาจ่ายตั้งแต่บาทแรก") || text.includes("ไม่มีส่วนร่วมจ่าย")) { setHlthDeductible(false); responseParts.push("แบบเหมาจ่ายตั้งแต่บาทแรก"); actionTaken = true; }
+                }
+            } else if (planPrefix === 'prema') {
+                if (text.includes("ไซส์ s") || text.includes("แผน s")) { setPremaPlan('s'); responseParts.push("แผน S"); actionTaken = true; }
+                else if (text.includes("ไซส์ m") || text.includes("แผน m")) { setPremaPlan('m'); responseParts.push("แผน M"); actionTaken = true; }
+                else if (text.includes("ไซส์ l") || text.includes("แผน l")) { setPremaPlan('l'); responseParts.push("แผน L"); actionTaken = true; }
+                else if (text.includes("ไซส์ xl") || text.includes("แผน xl")) { setPremaPlan('xl'); responseParts.push("แผน XL"); actionTaken = true; }
+                else if (text.includes("ไซส์ xxl") || text.includes("แผน xxl")) { setPremaPlan('xxl'); responseParts.push("แผน XXL"); actionTaken = true; }
+
+                if (text.includes("ขั้นอาชีพ 1") || text.includes("ขั้น 1") || text.includes("ทั่วไป")) { setPremaOcc('12'); responseParts.push("ขั้นอาชีพ 1-2"); actionTaken = true; }
+                else if (text.includes("ขั้นอาชีพ 3") || text.includes("ช่าง")) { setPremaOcc('3'); responseParts.push("ขั้นอาชีพ 3"); actionTaken = true; }
+                else if (text.includes("ขั้นอาชีพ 4") || text.includes("เสี่ยง")) { setPremaOcc('4'); responseParts.push("ขั้นอาชีพ 4"); actionTaken = true; }
+            }
+        }
+
+        if (actionTaken) {
+            let price = "-";
+            if(currentView === 'savings') price = document.getElementById('sav-total-price').innerText;
+            else if(currentHealthSubView === 'precious') price = document.getElementById('hlth-total-price').innerText;
+            else if(currentHealthSubView === 'kids') price = document.getElementById('kid-total-price').innerText;
+            else if(currentHealthSubView === 'prema') price = document.getElementById('prema-total-price').innerText;
+            
+            if (price === '-' || price === '0') speak("รับทราบค่ะ แต่อายุไม่อยู่ในเงื่อนไขที่รับประกันของแผนนี้ค่ะ");
+            else speak(`จัดให้ค่ะ ${responseParts.join(" ")} เบี้ยประกัน ${price} บาทค่ะ`);
+        }
+    }
+
+    // ================= INIT =================
+    updateSavSlidersUI();
+    calculateSavings();
+    calculateHealth();
+    renderKidDeductibles(); // Setup Kids default
+    calculatePrema(); // Setup Prema Care default
+    updateStickyBar();
+</script>
+</body>
+</html>

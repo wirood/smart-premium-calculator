@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
     :root {
         --primary: #e86614;
@@ -1434,7 +1435,7 @@
 
         <div class="modal-footer">
             <button onclick="exportAndShareImage()" class="btn-share" id="btn-share-img"><i class="fa-solid fa-share-nodes"></i> ส่งออกเป็นภาพ / แชร์</button>
-            <button onclick="window.print()" class="btn-print"><i class="fa-solid fa-print"></i> บันทึกเป็น PDF / พิมพ์</button>
+            <button onclick="exportPDF()" class="btn-print"><i class="fa-solid fa-file-pdf"></i> บันทึกเป็น PDF / พิมพ์</button>
         </div>
     </div>
 </div>
@@ -1856,6 +1857,39 @@
 
 
     // ================= EXPORT & SHARE LOGIC =================
+    
+    // ฟังก์ชันสำหรับส่งออกเป็น PDF (แก้ไขใหม่แทนการ Print)
+    function exportPDF() {
+        const btn = document.querySelector('.btn-print');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้าง PDF...';
+        btn.disabled = true;
+
+        const target = currentView === 'savings' ? document.getElementById('modal-savings-content') : document.getElementById('modal-health-content');
+
+        // ตั้งค่าตัวเลือกของ html2pdf.js
+        const opt = {
+            margin:       [10, 10, 10, 10],
+            filename:     'FWD_Proposal.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, windowWidth: 850 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            // สั่งให้ตัดหน้าใหม่ก่อนโค้ดที่มีคลาส .page-break-before อัตโนมัติ!
+            pagebreak:    { mode: ['legacy'], before: '.page-break-before' }
+        };
+
+        html2pdf().set(opt).from(target).save().then(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }).catch(err => {
+            console.error('PDF Export Error:', err);
+            alert('เกิดข้อผิดพลาดในการสร้าง PDF');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+
+    // ฟังก์ชันสำหรับส่งออกเป็นภาพ (จัดเรียงใหม่ให้หน้ากระดาษเรียงแบบแนวนอน)
     async function exportAndShareImage() {
         const btn = document.getElementById('btn-share-img');
         const originalText = btn.innerHTML;
@@ -1863,41 +1897,77 @@
         btn.disabled = true;
 
         try {
-            // ค้นหาเป้าหมายที่จะจับภาพตามแผนที่เลือก
-            let captureTarget = null;
-            if (currentView === 'savings') {
-                captureTarget = document.getElementById('modal-savings-content');
-            } else {
-                captureTarget = document.getElementById('modal-health-content');
-            }
+            const originalTarget = currentView === 'savings' ? document.getElementById('modal-savings-content') : document.getElementById('modal-health-content');
 
-            // แคปภาพเนื้อหาทั้งหมดใน Modal
-            const canvas = await html2canvas(captureTarget, {
-                scale: 2, // เพิ่มความละเอียดภาพ
-                useCORS: true,
-                backgroundColor: '#ffffff'
+            // สร้าง Container สมมติเพื่อจัดเรียงหน้ากระดาษให้เป็นตาราง/แนวนอน (ไม่ให้ยาวเกินไป)
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'absolute';
+            wrapper.style.left = '-9999px';
+            wrapper.style.top = '0';
+            wrapper.style.display = 'flex';
+            wrapper.style.flexDirection = 'row'; // จัดเรียงหน้ากระดาษเรียงต่อกันแนวนอน
+            wrapper.style.gap = '20px';
+            wrapper.style.padding = '20px';
+            wrapper.style.background = '#f0f4f8';
+            wrapper.style.fontFamily = "'Prompt', sans-serif";
+            wrapper.style.width = 'max-content';
+
+            // ดึงเฉพาะเนื้อหาลูกเพื่อนำมาจัดหน้าใหม่
+            const children = Array.from(originalTarget.childNodes).map(n => n.cloneNode(true));
+
+            // ฟังก์ชันช่วยสร้างกรอบกระดาษใหม่ทีละหน้า
+            const createPage = () => {
+                const page = document.createElement('div');
+                page.style.width = '794px'; // ความกว้างประมาณขนาด A4
+                page.style.background = 'white';
+                page.style.padding = '40px';
+                page.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                page.style.borderRadius = '10px';
+                page.style.boxSizing = 'border-box';
+                return page;
+            };
+
+            let currentPage = createPage();
+            wrapper.appendChild(currentPage);
+
+            // กระจายเนื้อหาใส่แต่ละหน้า โดยตัดขึ้นหน้าใหม่เมื่อเจอ .page-break-before
+            children.forEach(child => {
+                if (child.nodeType === 1 && child.classList.contains('page-break-before')) {
+                    currentPage = createPage();
+                    wrapper.appendChild(currentPage);
+                } else {
+                    currentPage.appendChild(child);
+                }
             });
 
-            canvas.toBlob(async (blob) => {
-                const file = new File([blob], 'proposal.png', { type: 'image/png' });
+            document.body.appendChild(wrapper);
 
-                // ทดสอบ Web Share API (มือถือ / แท็บเล็ต)
+            // ใช้ html2canvas จับภาพ Wrapper ที่ถูกจัดเรียงเป็น 3 หน้าแนวนอนแล้ว
+            const canvas = await html2canvas(wrapper, {
+                scale: 2, // ความละเอียดให้คมชัด
+                useCORS: true,
+                backgroundColor: '#f0f4f8'
+            });
+
+            document.body.removeChild(wrapper);
+
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'FWD_Proposal.png', { type: 'image/png' });
+
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     try {
                         await navigator.share({
-                            title: 'ใบเสนอราคาแผนประกัน',
-                            text: 'รายละเอียดแผนประกันจากลิตา FWD',
+                            title: 'ใบเสนอราคาแผนประกัน FWD',
+                            text: 'รายละเอียดใบเสนอราคาจากลิตา FWD ค่ะ',
                             files: [file]
                         });
                     } catch (error) {
-                        console.log('Error sharing or user cancelled:', error);
-                        fallbackDownload(blob); // หากผู้ใช้กดยกเลิกหรือแชร์ไม่ได้ ให้ดาวน์โหลดแทน
+                        fallbackDownload(blob);
                     }
                 } else {
-                    // หาก Web Share API ใช้ไม่ได้ (คอมพิวเตอร์) ให้ดาวน์โหลด
                     fallbackDownload(blob);
                 }
-                
+
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }, 'image/png');
@@ -1915,7 +1985,7 @@
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = 'proposal.png';
+        a.download = 'FWD_Proposal.png';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

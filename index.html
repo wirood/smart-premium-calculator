@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <style>
     :root {
         --primary: #e86614;
@@ -286,7 +287,7 @@
     .slider-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
     .slider-label { font-size: 14px; font-weight: 600; color: var(--text-dark); }
     .slider-input-wrapper { width: 130px; flex-shrink: 0; }
-    .slider-input-wrapper input { height: 38px; font-size: 15px; padding: 5px 12px; text-align: right; color: var(--primary); font-weight: 600; background: var(--primary-light); border: 1px solid var(--primary); }
+    .slider-input-wrapper input { height: 38px; font-size: 15px; padding: 5px 12px; text-align: right; color: var(--primary); font-weight: 600; background-color: var(--primary-light); border: 1px solid var(--primary); }
     input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-top: 8px; }
     input[type=range]:focus { outline: none; }
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 10px; cursor: pointer; background: #e0e0e0; border-radius: 6px; }
@@ -588,6 +589,28 @@
     .pdf-step i { font-size: 24px; color: var(--primary); margin-bottom: 8px; display: block; }
     .pdf-step span { font-size: 12px; font-weight: 600; color: var(--text-dark); line-height: 1.3; }
 
+    /* Class สำหรับจำลองหน้ากระดาษเมื่อแชร์เป็นรูปภาพ */
+    .image-capture-mode {
+        width: 800px !important;
+        padding: 30px !important;
+        background: white !important;
+        box-sizing: border-box !important;
+    }
+    .image-capture-mode .page-break-before {
+        display: block !important;
+        height: 30px !important;
+        background-color: #f0f0f0 !important;
+        margin: 30px -30px !important;
+        border-top: 1px solid #ccc !important;
+        border-bottom: 1px solid #ccc !important;
+    }
+
+    /* สั่ง break หน้ากระดาษเสมอ */
+    .page-break-before {
+        page-break-before: always;
+        break-before: page;
+    }
+
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     @media (max-width: 900px) {
@@ -659,12 +682,24 @@
         .pdf-agent-img { max-width: 200px; }
         .pdf-step { border: 1px solid #ccc; box-shadow: none; }
         
-        .pdf-agent-info { padding: 15px 20px !important; gap: 40px !important; }
-        .pdf-licenses-wrapper { flex-direction: row !important; gap: 15px !important; }
-        .pdf-license-item img { width: 175px !important; height: 110px !important; }
-        .pdf-agent-details { border-left: 2px dashed #fbdcbe !important; border-top: none !important; padding-left: 35px !important; padding-top: 0 !important; width: auto !important; align-items: flex-start !important; }
+        /* เพื่อบีบระยะหน้าแรก ให้ตารางพอดีหน้ากระดาษ */
+        .pdf-header { margin-bottom: 8px !important; padding-bottom: 5px !important; }
+        .pdf-header h2 { font-size: 20px !important; margin-bottom: 2px !important; }
+        .pdf-agent-info { padding: 10px 15px !important; margin-bottom: 10px !important; gap: 20px !important; }
+        .pdf-license-item img { height: 90px !important; width: 140px !important; }
+        .pdf-section-title { margin: 8px 0 6px !important; font-size: 14px !important; padding: 4px 12px !important; }
+        .pdf-plan-summary { padding: 10px 15px !important; margin-bottom: 10px !important; }
+        .pdf-plan-header { margin-bottom: 8px !important; }
+        .pdf-bd-row { margin-bottom: 2px !important; }
+        .pdf-bd-row.sub { margin-bottom: 6px !important; }
+        .pdf-coverage-box { margin-bottom: 10px !important; }
+        .pdf-coverage-box .coverage-table td, .pdf-coverage-box .coverage-table th { padding: 6px 12px !important; font-size: 12px !important; }
+        .table-section td { padding: 8px 12px !important; font-size: 13px !important; }
+
+        .pdf-licenses-wrapper { flex-direction: row !important; }
+        .pdf-agent-details { border-left: 2px dashed #fbdcbe !important; border-top: none !important; padding-left: 20px !important; padding-top: 0 !important; width: auto !important; align-items: flex-start !important; }
         .agent-sec-title { align-self: flex-start !important; }
-        .pdf-agent-details p { justify-content: flex-start !important; }
+        .pdf-agent-details p { justify-content: flex-start !important; margin: 2px 0 !important; }
 
         /* Infographic Print Overrides */
         .ci-infographic-wrapper { page-break-inside: avoid; }
@@ -678,7 +713,7 @@
             page-break-inside: avoid; 
         }
 
-        /* Page Break Classes สำหรับสั่งพิมพ์ให้ขึ้นหน้าใหม่ */
+        /* บังคับขึ้นหน้าใหม่ตอนพิมพ์ (สำหรับ Print Dialog ธรรมดา) */
         .page-break-before { 
             page-break-before: always !important; 
             break-before: page !important; 
@@ -1262,7 +1297,7 @@
                 <ul>
                     <li><i class="fa-solid fa-check-circle" style="color:var(--primary);"></i> <strong>หัวหน้าครอบครัว:</strong> ที่ต้องการสร้างมรดกเงินก้อนใหญ่ทิ้งไว้ให้คนข้างหลัง เพื่อเป็นหลักประกันความมั่นคงทางการเงิน</li>
                     <li><i class="fa-solid fa-check-circle" style="color:var(--primary);"></i> <strong>ผู้ที่กังวลค่าใช้จ่ายโรคร้าย:</strong> ต้องการวงเงินคุ้มครองโรคร้ายแรงสูงสุด 50 โรค เพื่อครอบคลุมค่ารักษาที่อาจสูงถึงหลักล้าน</li>
-                    <li><i class="fa-solid fa-check-circle" style="color:var(--primary);"></i> <strong>ผู้ที่ต้องการวางแผนระยะยาว:</strong> ทำครั้งเดียว ให้ความคุ้มครองยาวนานตลอดชีพ (90 ปี)</li>
+                    <li><i class="fa-solid fa-check-circle" style="color:var(--primary);"></i> <strong>ผู้ที่ต้องการวางแผนระยะยาว:</strong> ด้วยเบี้ยประกันที่คงที่ตลอดสัญญา ไม่ปรับเพิ่มตามอายุ และให้ความคุ้มครองยาวนานตลอดชีพ (99 ปี)</li>
                 </ul>
             </div>
 
@@ -1396,8 +1431,6 @@
             <div class="pdf-rules-list">
                 <ul>
                     <li><strong>ระยะเวลารอคอย 90 วัน</strong> นับตั้งแต่วันที่กรมธรรม์มีผลบังคับ สำหรับความคุ้มครอง 50 โรคร้ายแรง</li>
-                    <li><strong>ระยะเวลารอคอยอุบัติเหตุ</strong> คุ้มครองทันทีนับตั้งแต่วันที่กรมธรรม์มีผลบังคับ</li>
-
                     <li>ไม่คุ้มครองกรณีผู้เอาประกันภัยได้รับการวินิจฉัย หรือมีอาการของโรคร้ายแรงก่อนหรือภายใน 90 วัน นับจากวันที่เริ่มมีผลคุ้มครอง</li>
                 </ul>
             </div>
@@ -1415,8 +1448,8 @@
 
             <div class="pdf-section-title"><i class="fa-solid fa-laptop-medical"></i> ขั้นตอนการสมัครออนไลน์ (E-Submission)</div>
             <div class="pdf-app-steps">
-                <div class="pdf-step"><i class="fa-solid fa-address-card"></i><span>1. ให้ข้อมูลและ<br>ตอบคำถามสุขภาพตามจริง</span></div>
-                <div class="pdf-step"><i class="fa-solid fa-heart-circle-check"></i><span>2. ยืนยันตัวตน<br>รอรับลิ้งค์ SMS</span></div>
+                <div class="pdf-step"><i class="fa-solid fa-address-card"></i><span>1. ให้ข้อมูลและ<br>ยืนยันตัวตน</span></div>
+                <div class="pdf-step"><i class="fa-solid fa-heart-circle-check"></i><span>2. ตอบคำถาม<br>สุขภาพตามจริง</span></div>
                 <div class="pdf-step"><i class="fa-solid fa-credit-card"></i><span>3. ชำระเบี้ยประกัน<br>ผ่าน QR / บัตรเครดิต</span></div>
                 <div class="pdf-step"><i class="fa-solid fa-file-contract"></i><span>4. อนุมัติและรับ<br>กรมธรรม์ E-Policy</span></div>
             </div>
@@ -1435,7 +1468,7 @@
 
         <div class="modal-footer">
             <button onclick="exportAndShareImage()" class="btn-share" id="btn-share-img"><i class="fa-solid fa-share-nodes"></i> ส่งออกเป็นภาพ / แชร์</button>
-            <button onclick="exportPDF()" class="btn-print"><i class="fa-solid fa-file-pdf"></i> บันทึกเป็น PDF / พิมพ์</button>
+            <button onclick="exportPDF()" class="btn-print" id="btn-export-pdf"><i class="fa-solid fa-file-pdf"></i> บันทึกเป็น PDF</button>
         </div>
     </div>
 </div>
@@ -1578,6 +1611,99 @@
     
     function closeProposalModal() {
         document.getElementById('proposal-modal').style.display = 'none';
+    }
+
+    // ================= EXPORT & SHARE LOGIC =================
+    
+    function exportPDF() {
+        const btn = document.getElementById('btn-export-pdf');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้าง PDF...';
+        btn.disabled = true;
+
+        const element = document.getElementById(currentView === 'savings' ? 'modal-savings-content' : 'modal-health-content');
+        
+        const opt = {
+            margin:       [10, 10, 10, 10], 
+            filename:     'FWD_Proposal.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak:    { mode: ['css', 'legacy'] }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }).catch(err => {
+            console.error(err);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+
+    async function exportAndShareImage() {
+        const btn = document.getElementById('btn-share-img');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังประมวลผล...';
+        btn.disabled = true;
+
+        try {
+            let captureTarget = document.getElementById(currentView === 'savings' ? 'modal-savings-content' : 'modal-health-content');
+
+            // ใช้ CSS class จำลองการขึ้นหน้าใหม่เพื่อเป็นระยะห่าง
+            captureTarget.classList.add('image-capture-mode');
+
+            const canvas = await html2canvas(captureTarget, {
+                scale: 2, 
+                useCORS: true,
+                backgroundColor: '#e5e5e5',
+                width: 800, 
+                windowWidth: 800
+            });
+
+            captureTarget.classList.remove('image-capture-mode');
+
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'proposal.png', { type: 'image/png' });
+                
+                // สำหรับมือถือ/Tablet ที่รองรับการแชร์
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            title: 'ใบเสนอราคาแผนประกัน FWD',
+                            files: [file]
+                        });
+                    } catch (error) {
+                        console.log('User cancelled share or share failed.', error);
+                        fallbackDownload(blob, 'proposal.png');
+                    }
+                } else {
+                    // หากไม่รองรับให้ดาวน์โหลดอัตโนมัติ
+                    fallbackDownload(blob, 'proposal.png');
+                }
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 'image/png');
+
+        } catch (err) {
+            console.error('Error generating image:', err);
+            alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function fallbackDownload(blob, fileName) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 
     // ================= VIEW NAVIGATION =================
@@ -1855,141 +1981,6 @@
         updateStickyBar();
     }
 
-
-    // ================= EXPORT & SHARE LOGIC =================
-    
-    // ฟังก์ชันสำหรับส่งออกเป็น PDF (แก้ไขใหม่แทนการ Print)
-    function exportPDF() {
-        const btn = document.querySelector('.btn-print');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังสร้าง PDF...';
-        btn.disabled = true;
-
-        const target = currentView === 'savings' ? document.getElementById('modal-savings-content') : document.getElementById('modal-health-content');
-
-        // ตั้งค่าตัวเลือกของ html2pdf.js
-        const opt = {
-            margin:       [10, 10, 10, 10],
-            filename:     'FWD_Proposal.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, windowWidth: 850 },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            // สั่งให้ตัดหน้าใหม่ก่อนโค้ดที่มีคลาส .page-break-before อัตโนมัติ!
-            pagebreak:    { mode: ['legacy'], before: '.page-break-before' }
-        };
-
-        html2pdf().set(opt).from(target).save().then(() => {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }).catch(err => {
-            console.error('PDF Export Error:', err);
-            alert('เกิดข้อผิดพลาดในการสร้าง PDF');
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        });
-    }
-
-    // ฟังก์ชันสำหรับส่งออกเป็นภาพ (จัดเรียงใหม่ให้หน้ากระดาษเรียงแบบแนวนอน)
-    async function exportAndShareImage() {
-        const btn = document.getElementById('btn-share-img');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังประมวลผล...';
-        btn.disabled = true;
-
-        try {
-            const originalTarget = currentView === 'savings' ? document.getElementById('modal-savings-content') : document.getElementById('modal-health-content');
-
-            // สร้าง Container สมมติเพื่อจัดเรียงหน้ากระดาษให้เป็นตาราง/แนวนอน (ไม่ให้ยาวเกินไป)
-            const wrapper = document.createElement('div');
-            wrapper.style.position = 'absolute';
-            wrapper.style.left = '-9999px';
-            wrapper.style.top = '0';
-            wrapper.style.display = 'flex';
-            wrapper.style.flexDirection = 'row'; // จัดเรียงหน้ากระดาษเรียงต่อกันแนวนอน
-            wrapper.style.gap = '20px';
-            wrapper.style.padding = '20px';
-            wrapper.style.background = '#f0f4f8';
-            wrapper.style.fontFamily = "'Prompt', sans-serif";
-            wrapper.style.width = 'max-content';
-
-            // ดึงเฉพาะเนื้อหาลูกเพื่อนำมาจัดหน้าใหม่
-            const children = Array.from(originalTarget.childNodes).map(n => n.cloneNode(true));
-
-            // ฟังก์ชันช่วยสร้างกรอบกระดาษใหม่ทีละหน้า
-            const createPage = () => {
-                const page = document.createElement('div');
-                page.style.width = '794px'; // ความกว้างประมาณขนาด A4
-                page.style.background = 'white';
-                page.style.padding = '40px';
-                page.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-                page.style.borderRadius = '10px';
-                page.style.boxSizing = 'border-box';
-                return page;
-            };
-
-            let currentPage = createPage();
-            wrapper.appendChild(currentPage);
-
-            // กระจายเนื้อหาใส่แต่ละหน้า โดยตัดขึ้นหน้าใหม่เมื่อเจอ .page-break-before
-            children.forEach(child => {
-                if (child.nodeType === 1 && child.classList.contains('page-break-before')) {
-                    currentPage = createPage();
-                    wrapper.appendChild(currentPage);
-                } else {
-                    currentPage.appendChild(child);
-                }
-            });
-
-            document.body.appendChild(wrapper);
-
-            // ใช้ html2canvas จับภาพ Wrapper ที่ถูกจัดเรียงเป็น 3 หน้าแนวนอนแล้ว
-            const canvas = await html2canvas(wrapper, {
-                scale: 2, // ความละเอียดให้คมชัด
-                useCORS: true,
-                backgroundColor: '#f0f4f8'
-            });
-
-            document.body.removeChild(wrapper);
-
-            canvas.toBlob(async (blob) => {
-                const file = new File([blob], 'FWD_Proposal.png', { type: 'image/png' });
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            title: 'ใบเสนอราคาแผนประกัน FWD',
-                            text: 'รายละเอียดใบเสนอราคาจากลิตา FWD ค่ะ',
-                            files: [file]
-                        });
-                    } catch (error) {
-                        fallbackDownload(blob);
-                    }
-                } else {
-                    fallbackDownload(blob);
-                }
-
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }, 'image/png');
-
-        } catch (err) {
-            console.error('Error generating image:', err);
-            alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ');
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    }
-
-    function fallbackDownload(blob) {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'FWD_Proposal.png';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-    }
 
     // ================= VOICE LOGIC =================
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;

@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     :root {
         --primary: #e86614;
@@ -284,7 +285,7 @@
     .slider-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
     .slider-label { font-size: 14px; font-weight: 600; color: var(--text-dark); }
     .slider-input-wrapper { width: 130px; flex-shrink: 0; }
-    .slider-input-wrapper input { height: 38px; font-size: 15px; padding: 5px 12px; text-align: right; color: var(--primary); font-weight: 600; background-color: var(--primary-light); border: 1px solid var(--primary); }
+    .slider-input-wrapper input { height: 38px; font-size: 15px; padding: 5px 12px; text-align: right; color: var(--primary); font-weight: 600; background: var(--primary-light); border: 1px solid var(--primary); }
     input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-top: 8px; }
     input[type=range]:focus { outline: none; }
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 10px; cursor: pointer; background: #e0e0e0; border-radius: 6px; }
@@ -320,6 +321,7 @@
     .td-bullet { padding-left: 35px !important; color: var(--text-grey); font-size: 13px; }
     .td-highlight-text { color: var(--primary); font-weight: 600; }
 
+    /* ========= STICKY BAR ========= */
     .premium-sticky-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 250; background: white; border-top: 3px solid var(--primary); box-shadow: 0 -5px 22px rgba(0,0,0,0.14); padding: 12px 20px; }
     .sticky-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .sticky-avatar { width: 50px; height: 50px; object-fit: contain; flex-shrink: 0; border-radius: 50%; background: transparent; }
@@ -329,9 +331,261 @@
     .sticky-price-label { font-size: 14px; color: var(--text-grey); margin-bottom: 3px; }
     .sticky-price { font-size: 28px; line-height: 1; color: var(--primary); font-weight: 700; }
     .sticky-price span { font-size: 24px; font-weight: 800; }
+    
+    .btn-export-pdf { 
+        background-color: var(--text-dark); 
+        color: white; 
+        border: none; 
+        padding: 14px 24px; 
+        border-radius: 12px; 
+        font-family: 'Prompt', sans-serif; 
+        font-size: 16px; 
+        font-weight: 600; 
+        cursor: pointer; 
+        transition: 0.2s; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        gap: 10px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+        width: 100%; 
+    }
+    .btn-export-pdf:hover { background-color: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(232, 102, 20, 0.25); }
+    .btn-export-pdf i { font-size: 18px; color: #ffeb3b; }
 
     .view-section { display: none; }
     .view-section.active { display: block; animation: fadeIn 0.35s ease-in-out; }
+
+    /* Modal PDF Proposal Styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; }
+    .modal-content { background: white; width: 100%; max-width: 900px; max-height: 90vh; border-radius: 12px; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .modal-close { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: var(--text-grey); z-index: 10; background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .modal-body { padding: 30px 40px; background: #fff; }
+    .modal-footer { padding: 15px 30px; background: #fafafa; border-top: 1px solid var(--border-color); text-align: right; position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: flex-end; gap: 10px; }
+    
+    .btn-print { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Prompt', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(232, 102, 20, 0.3); }
+    .btn-print:hover { background: #cf5a10; }
+    
+    .btn-share { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Prompt', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3); }
+    .btn-share:hover { background: #218838; }
+    .btn-share:disabled { background: #6c757d; cursor: not-allowed; box-shadow: none; }
+    
+    .pdf-header { text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px; }
+    .pdf-header h2 { color: var(--primary); margin: 0 0 5px; font-size: 22px; }
+    .pdf-header p { margin: 0; color: var(--text-grey); font-size: 15px; }
+    
+    /* สไตล์สำหรับการจัดวางข้อมูลตัวแทนและใบอนุญาตแบบใหม่ */
+    .pdf-agent-info { 
+        display: flex; 
+        align-items: center; 
+        gap: 40px; 
+        background: #fffdf9; 
+        padding: 20px 25px; 
+        border-radius: 10px; 
+        margin-bottom: 20px; 
+        border: 1px solid #fbdcbe; 
+        box-shadow: 0 4px 10px rgba(232, 102, 20, 0.05); 
+    }
+    .pdf-licenses-wrapper { display: flex; gap: 20px; }
+    .pdf-license-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .pdf-license-item img { 
+        width: 190px; 
+        height: 120px;
+        border-radius: 6px; 
+        object-fit: cover; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        background: #fff; 
+        border: 1px solid #e0e0e0; 
+    }
+    .pdf-license-label { font-size: 11px; font-weight: 700; color: #d85c38; text-align: center; }
+    
+    .pdf-agent-details { 
+        flex: 1;
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center; 
+        border-left: 2px dashed #fbdcbe; 
+        padding-left: 45px; 
+    }
+    .agent-sec-title { 
+        font-size: 12px; 
+        color: var(--text-grey); 
+        font-weight: 700; 
+        margin-bottom: 8px; 
+        display: inline-block; 
+        background: #f4f4f4; 
+        padding: 4px 10px; 
+        border-radius: 20px; 
+        border: 1px solid #ddd; 
+        align-self: flex-start; 
+    }
+    .pdf-agent-details h4 { margin: 0 0 10px 0; font-size: 16px; color: var(--text-dark); border-bottom: 1px dashed var(--border-color); padding-bottom: 8px; }
+    .pdf-agent-details p { margin: 4px 0; font-size: 12.5px; color: var(--text-dark); display: flex; align-items: center; gap: 10px; font-weight: 500; }
+    .pdf-agent-details i { color: var(--primary); width: 20px; text-align: center; font-size: 14px; }
+    
+    .pdf-section-title { font-size: 15px; color: white; background: var(--primary); padding: 6px 15px; border-radius: 6px; margin: 15px 0 10px; display: inline-block; font-weight: 600; box-shadow: 0 2px 5px rgba(232, 102, 20, 0.2); }
+    
+    /* สไตล์ใหม่สำหรับกล่องข้อมูลแผน และเบี้ยประกัน */
+    .pdf-plan-summary { display: block; background: white; padding: 15px 20px; border-radius: 12px; border: 2px solid var(--primary); margin-bottom: 15px; }
+    .pdf-plan-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .pdf-plan-title { margin: 0; color: var(--text-dark); font-size: 18px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+    .pdf-plan-badge { font-size: 13px; font-weight: 500; background: var(--bg-color); padding: 4px 10px; border-radius: 6px; border: 1px solid #fbdcbe; color: var(--text-grey); }
+    .pdf-plan-price-box { text-align: right; }
+    .pdf-plan-price-label { font-size: 13px; color: var(--text-grey); margin-bottom: 4px; }
+    .pdf-plan-price-amount { font-size: 32px; color: var(--primary); font-weight: 700; line-height: 1; }
+    .pdf-plan-price-unit { font-size: 16px; color: var(--text-dark); font-weight: 500; }
+    
+    .pdf-plan-breakdown { border-top: 1px dashed var(--border-color); padding-top: 15px; }
+    .pdf-bd-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-dark); margin-bottom: 4px; }
+    .pdf-bd-row.sub { font-size: 13px; color: var(--text-grey); padding-left: 15px; margin-bottom: 10px; }
+    .pdf-bd-val { font-weight: 600; }
+    
+    .pdf-coverage-box { background: white; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; margin-bottom: 15px; }
+    .pdf-coverage-box .coverage-table td, .pdf-coverage-box .coverage-table th { padding: 8px 15px !important; font-size: 13px; }
+    .pdf-coverage-box .table-section td { padding: 10px 15px !important; font-size: 14px; }
+
+    /* New Section: Suitability Box */
+    .pdf-suitability-box { background: #fef8f4; border: 1px solid #fbdcbe; border-radius: 8px; padding: 12px 18px; margin-bottom: 15px; }
+    .pdf-suitability-box ul { margin: 0; padding: 0; list-style: none; }
+    .pdf-suitability-box li { display: flex; gap: 10px; margin-bottom: 6px; font-size: 12.5px; color: var(--text-dark); line-height: 1.4; align-items: flex-start; }
+    .pdf-suitability-box li:last-child { margin-bottom: 0; }
+    
+    /* -------------------------------------------
+       Infographic 50 Critical Illness (Landscape Style - Highly Squeezed)
+       ------------------------------------------- */
+    .ci-infographic-wrapper {
+        margin-bottom: 15px;
+        page-break-inside: avoid;
+    }
+    .ci-infographic {
+        border: 2px solid #b2d8d8;
+        border-radius: 10px;
+        padding: 12px 18px;
+        background: #ffffff;
+        font-family: 'Prompt', sans-serif;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+    .ci-top-area {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+    .ci-top-left {
+        flex: 1;
+        padding-right: 15px;
+    }
+    .ci-main-title {
+        color: #d85c38;
+        font-size: 20px;
+        font-weight: 800;
+        margin: 0 0 8px 0;
+        text-shadow: 1px 1px 2px rgba(216, 92, 56, 0.1);
+    }
+    .ci-early-flex {
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+        border-bottom: 2px solid #eaddd3;
+        padding-bottom: 8px;
+    }
+    .ci-early-label {
+        color: #b86a52;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.2;
+        min-width: 110px;
+    }
+    .ci-early-label span {
+        font-size: 12px;
+    }
+    .ci-early-label .count {
+        color: #b86a52;
+        display: block;
+        margin-top: 3px;
+    }
+    .ci-early-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 11.5px;
+        color: #333;
+        line-height: 1.25;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .ci-early-list li {
+        display: flex;
+        gap: 4px;
+    }
+    .ci-early-list li .num {
+        font-weight: 700;
+    }
+    .ci-top-right {
+        flex-shrink: 0;
+    }
+    .ci-top-right img {
+        width: 180px;
+        height: auto;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .ci-late-label {
+        color: #b86a52;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .ci-late-label span {
+        font-size: 12px;
+    }
+    .ci-late-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        align-items: start;
+    }
+    .ci-cat {
+        margin-bottom: 8px;
+    }
+    .ci-cat h4 {
+        color: #c4826b;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 0 0 3px 0;
+        border-bottom: 1px solid #eaddd3;
+        padding-bottom: 2px;
+    }
+    .ci-cat ol {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 11px;
+        line-height: 1.2;
+        color: #222;
+    }
+    .ci-cat ol li {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 2px;
+    }
+    .ci-cat ol li span.num {
+        font-weight: 700;
+        width: 15px;
+        flex-shrink: 0;
+    }
+    
+    .ci-cat-others ol li {
+        margin-bottom: 4.5px;
+    }
+
+    .pdf-rules-list { font-size: 12.5px; color: var(--text-dark); line-height: 1.4; padding-left: 20px; margin-bottom: 15px; }
+    .pdf-rules-list li { margin-bottom: 4px; }
+    
+    .pdf-app-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; text-align: center; }
+    .pdf-step { background: white; padding: 12px 5px; border-radius: 8px; border: 1px solid var(--primary-light); box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+    .pdf-step i { font-size: 24px; color: var(--primary); margin-bottom: 8px; display: block; }
+    .pdf-step span { font-size: 12px; font-weight: 600; color: var(--text-dark); line-height: 1.3; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -361,6 +615,77 @@
         .sub-tab-btn i { margin-right: 10px; }
         .kid-benefits { grid-template-columns: 1fr; gap: 10px; }
         .prema-plan-grid { grid-template-columns: repeat(3, 1fr); }
+        
+        .pdf-agent-info { flex-direction: column; align-items: center; text-align: center; padding: 15px; gap: 20px; }
+        .pdf-licenses-wrapper { flex-direction: row; justify-content: center; flex-wrap: wrap; gap: 15px; }
+        .pdf-license-item img { width: 150px; }
+        .pdf-agent-details { border-left: none; border-top: 2px dashed #fbdcbe; padding-left: 0; padding-top: 20px; width: 100%; align-items: center; }
+        .agent-sec-title { align-self: center; }
+        .pdf-agent-details h4 { text-align: center; }
+        .pdf-agent-details p { justify-content: center; }
+        
+        .pdf-plan-header { flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+        .pdf-plan-title { flex-direction: column; gap: 5px; }
+        .pdf-plan-price-box { text-align: center; }
+        .pdf-bd-row { flex-direction: column; gap: 4px; text-align: center; }
+        .pdf-bd-row.sub { padding-left: 0; }
+        
+        .pdf-app-steps { grid-template-columns: repeat(2, 1fr); }
+        .modal-body { padding: 20px; }
+        
+        /* Mobile Infographic overrides */
+        .ci-top-area { flex-direction: column; }
+        .ci-top-right { margin-top: 15px; text-align: center; }
+        .ci-top-right img { width: 100%; max-width: 250px; }
+        .ci-early-flex { flex-direction: column; gap: 8px; border-bottom: none; }
+        .ci-late-grid { grid-template-columns: 1fr; gap: 10px; }
+        .ci-cat-others ol li { margin-bottom: 2px; }
+
+        /* Mobile footer buttons */
+        .modal-footer { flex-direction: column-reverse; align-items: stretch; }
+        .modal-footer button { width: 100%; margin: 0; justify-content: center; }
+    }
+
+    /* Print Styles */
+    @media print {
+        @page { margin: 10mm; } 
+        body { background: white; font-size: 12px; } 
+        body > *:not(.modal-overlay) { display: none !important; }
+        .modal-overlay { display: block !important; position: absolute; background: transparent; padding: 0; width: 100%; height: auto; }
+        .modal-content { box-shadow: none; border-radius: 0; max-width: 100%; max-height: none; overflow: visible; border: none; }
+        .modal-close, .modal-footer { display: none !important; }
+        .modal-body { padding: 0; }
+        .pdf-agent-img { max-width: 200px; }
+        .pdf-step { border: 1px solid #ccc; box-shadow: none; }
+        
+        .pdf-agent-info { padding: 15px 20px !important; gap: 40px !important; }
+        .pdf-licenses-wrapper { flex-direction: row !important; gap: 15px !important; }
+        .pdf-license-item img { width: 175px !important; height: 110px !important; }
+        .pdf-agent-details { border-left: 2px dashed #fbdcbe !important; border-top: none !important; padding-left: 35px !important; padding-top: 0 !important; width: auto !important; align-items: flex-start !important; }
+        .agent-sec-title { align-self: flex-start !important; }
+        .pdf-agent-details p { justify-content: flex-start !important; }
+
+        /* Infographic Print Overrides */
+        .ci-infographic-wrapper { page-break-inside: avoid; }
+        .ci-infographic { border-color: #b2d8d8 !important; box-shadow: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 10px; }
+        .ci-top-area { margin-bottom: 10px; }
+        .ci-early-flex { padding-bottom: 5px; }
+        .ci-cat { margin-bottom: 6px; }
+        .ci-cat-others ol li { margin-bottom: 3.5px; }
+        
+        .pdf-section-title, .pdf-plan-summary, .pdf-coverage-box, .pdf-rules-list, .pdf-suitability-box, .pdf-app-steps { 
+            page-break-inside: avoid; 
+        }
+
+        /* Page Break Classes สำหรับสั่งพิมพ์ให้ขึ้นหน้าใหม่ */
+        .page-break-before { 
+            page-break-before: always !important; 
+            break-before: page !important; 
+            display: block !important; 
+            height: 0 !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+        }
     }
 </style>
 </head>
@@ -648,9 +973,9 @@
                     </div>
                 </div>
                 <div class="plan-details">
-                    <div class="detail-row"><span>1. สัญญาหลัก เงินออม (ตลอดชีพ)</span><span class="detail-val" id="sav-main-price">-</span></div>
+                    <div class="detail-row"><span>1. สัญญาหลัก เงินออม (ตลอดชีพ) <span style="color: #d32f2f; font-size: 0.85em;">(เบี้ยคงที่)</span></span><span class="detail-val" id="sav-main-price">-</span></div>
                     <div class="breakdown-row">ทุนประกัน <span><span id="sav-display-main-sum">200,000</span> บาท</span></div>
-                    <div class="detail-row" style="margin-top:15px;"><span>2. ประกัน 50 โรคร้ายแรง</span><span class="detail-val" id="sav-ci-price">-</span></div>
+                    <div class="detail-row" style="margin-top:15px;"><span>2. ประกัน 50 โรคร้ายแรง <span style="color: #d32f2f; font-size: 0.85em;">(เบี้ยปรับเพิ่มทุกปี)</span></span><span class="detail-val" id="sav-ci-price">-</span></div>
                     <div class="breakdown-row">ทุนประกัน <span><span id="sav-display-ci-sum">2,000,000</span> บาท</span></div>
                 </div>
             </div>
@@ -669,6 +994,12 @@
                     <tr class="table-section"><td colspan="2"><i class="fa-solid fa-piggy-bank"></i> <span class="section-title">3. ผลประโยชน์กรณีมีชีวิตอยู่</span></td></tr>
                     <tr><td style="padding-left: 20px;">กรณีมีชีวิตอยู่ครบกำหนดสัญญารับเงิน</td><td id="sav-tbl-maturity">-</td></tr>
                 </table>
+            </div>
+            
+            <div style="margin-top: 20px; display: block; width: 100%;">
+                <button class="btn-export-pdf" onclick="openProposalModal()">
+                    <i class="fa-solid fa-file-pdf"></i> ส่งข้อมูลแผนนี้ (PDF)
+                </button>
             </div>
         </div>
 
@@ -713,6 +1044,12 @@
                         <tr><td>ค่ารักษาแพทย์ทางเลือก</td><td id="hlth-tbl-alt-med">-</td></tr>
                         <tr><td>ค่าตั้งครรภ์และคลอดบุตร / จิตเวช</td><td id="hlth-tbl-maternity">-</td></tr>
                     </table>
+                </div>
+                
+                <div style="margin-top: 20px; display: block; width: 100%;">
+                    <button class="btn-export-pdf" onclick="openProposalModal()">
+                        <i class="fa-solid fa-file-pdf"></i> ส่งข้อมูลแผนนี้ (PDF)
+                    </button>
                 </div>
             </div>
 
@@ -772,7 +1109,12 @@
                         * 3 โรคร้ายแรงสำหรับเด็ก ได้แก่ โรคไข้เลือดออกเดงกีที่มีภาวะช็อก, โรควัณโรคสมองหรือเยื่อหุ้มสมอง, โรคหอบหืดระดับรุนแรงมาก
                     </div>
                 </div>
-
+                
+                <div style="margin-top: 20px; display: block; width: 100%;">
+                    <button class="btn-export-pdf" onclick="openProposalModal()">
+                        <i class="fa-solid fa-file-pdf"></i> ส่งข้อมูลแผนนี้ (PDF)
+                    </button>
+                </div>
             </div>
 
             <div id="health-res-prema" class="health-sub-view">
@@ -805,6 +1147,12 @@
                         <tr><td>วงเงินเพิ่มกรณีป่วย มะเร็ง/หัวใจ/หลอดเลือดสมอง</td><td id="prema-tbl-ci">-</td></tr>
                     </table>
                 </div>
+                
+                <div style="margin-top: 20px; display: block; width: 100%;">
+                    <button class="btn-export-pdf" onclick="openProposalModal()">
+                        <i class="fa-solid fa-file-pdf"></i> ส่งข้อมูลแผนนี้ (PDF)
+                    </button>
+                </div>
             </div>
 
         </div>
@@ -827,17 +1175,275 @@
     </div>
 </div>
 
+<div id="proposal-modal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeProposalModal()"><i class="fa-solid fa-xmark"></i></span>
+        
+        <div id="modal-savings-content" class="modal-body" style="display:none;">
+            <div class="pdf-header">
+                <h2>รายละเอียดข้อเสนอแผนประกันสร้างมรดก</h2>
+                <p>และคุ้มครอง 50 โรคร้ายแรง FWD Insurance</p>
+            </div>
+            
+            <div class="pdf-agent-info">
+                <div class="pdf-licenses-wrapper">
+                    <div class="pdf-license-item">
+                        <img src="licen.png" alt="Life Insurance License">
+                        <div class="pdf-license-label">ใบอนุญาตตัวแทนประกันชีวิต</div>
+                    </div>
+                    <div class="pdf-license-item">
+                        <img src="licen2.png" alt="Non-Life Insurance License">
+                        <div class="pdf-license-label">ใบอนุญาตตัวแทนวินาศภัย</div>
+                    </div>
+                </div>
+                <div class="pdf-agent-details">
+                    <div class="agent-sec-title">ข้อมูลตัวแทน</div>
+                    <h4>คุณ นฤมล คำใบ (ต๋อย)</h4>
+                    <p><i class="fa-solid fa-id-card"></i> เลขที่ใบอนุญาต: 6901010926</p>
+                    <p><i class="fa-solid fa-phone"></i> เบอร์โทรศัพท์: 086-901-7235</p>
+                    <p><i class="fa-brands fa-line"></i> Line OA: @toifwd</p>
+                </div>
+            </div>
+
+            <div class="pdf-section-title"><i class="fa-solid fa-shield-halved"></i> ข้อมูลแผน และเบี้ยประกัน</div>
+            
+            <div class="pdf-plan-summary">
+                <div class="pdf-plan-header">
+                    <h3 class="pdf-plan-title">
+                        แผนสร้างมรดก + 50 โรคร้ายแรง
+                        <span id="pdf-sav-plan-badge" class="pdf-plan-badge">แผน 1.2 ล้าน</span>
+                    </h3>
+                    <div class="pdf-plan-price-box">
+                        <div class="pdf-plan-price-label">เบี้ยรวมต่อปี</div>
+                        <div class="pdf-plan-price-amount"><span id="pdf-sav-premium">-</span> <span class="pdf-plan-price-unit">บาท</span></div>
+                    </div>
+                </div>
+                <div class="pdf-plan-breakdown">
+                    <div class="pdf-bd-row">
+                        <span>1. สัญญาหลัก เงินออม (ตลอดชีพ) <span style="color: #d32f2f; font-size: 0.9em;">(เบี้ยคงที่)</span></span>
+                        <span class="pdf-bd-val"><span id="pdf-sav-main-premium">-</span> บาท</span>
+                    </div>
+                    <div class="pdf-bd-row sub">
+                        <span>ทุนประกัน</span>
+                        <span><span id="pdf-sav-main-sum">-</span> บาท</span>
+                    </div>
+                    <div class="pdf-bd-row">
+                        <span>2. ประกัน 50 โรคร้ายแรง <span style="color: #d32f2f; font-size: 0.9em;">(เบี้ยปรับเพิ่มทุกปี)</span></span>
+                        <span class="pdf-bd-val"><span id="pdf-sav-ci-premium">-</span> บาท</span>
+                    </div>
+                    <div class="pdf-bd-row sub">
+                        <span>ทุนประกัน</span>
+                        <span><span id="pdf-sav-ci-sum">-</span> บาท</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pdf-section-title"><i class="fa-solid fa-list-check"></i> สรุปผลประโยชน์ความคุ้มครอง</div>
+            <div class="pdf-coverage-box">
+                <table class="coverage-table" style="margin-bottom: 0; border: none; width: 100%;">
+                    <tr class="table-section"><td colspan="2"><i class="fa-solid fa-virus-covid"></i> <span class="section-title">1. ผลประโยชน์ 50 โรคร้ายแรง</span></td></tr>
+                    <tr><td><strong>1.1 ระยะเริ่มต้น (Early Stage)<br>5 โรคร้ายแรง</strong></td><td id="pdf-tbl-early-stage">-</td></tr>
+                    <tr style="background-color: #fafafa;"><td colspan="2"><strong>1.2 ระยะรุนแรง (Last Stage)<br>45 โรคร้ายแรง</strong></td></tr>
+                    <tr style="background-color: #fafafa;"><td class="td-bullet">• กรณี<span class="td-highlight-text">ยังไม่มี</span>การจ่ายระยะเริ่มต้น</td><td id="pdf-tbl-last-stage-1">-</td></tr>
+                    <tr style="background-color: #fafafa;"><td class="td-bullet">• กรณี<span class="td-highlight-text">มีการจ่าย</span>ระยะเริ่มต้นแล้ว</td><td id="pdf-tbl-last-stage-2">-</td></tr>
+                    <tr class="table-section"><td colspan="2"><i class="fa-solid fa-bed-pulse"></i> <span class="section-title">2. ผลประโยชน์กรณีเสียชีวิต</span></td></tr>
+                    <tr><td class="td-bullet">• กรณี<span class="td-highlight-text">ยังไม่มี</span>การจ่ายโรคร้ายระยะเริ่มต้น</td><td id="pdf-tbl-death-1">-</td></tr>
+                    <tr><td class="td-bullet">• กรณี<span class="td-highlight-text">มีการจ่าย</span>โรคร้ายระยะเริ่มต้นแล้ว</td><td id="pdf-tbl-death-2">-</td></tr>
+                    <tr><td class="td-bullet">• กรณี<span class="td-highlight-text">มีการจ่าย</span>โรคร้ายระยะรุนแรงแล้ว</td><td id="pdf-tbl-death-3">-</td></tr>
+                    <tr class="table-section"><td colspan="2"><i class="fa-solid fa-piggy-bank"></i> <span class="section-title">3. ผลประโยชน์กรณีมีชีวิตอยู่</span></td></tr>
+                    <tr><td style="padding-left: 20px;">กรณีมีชีวิตอยู่ครบกำหนดสัญญารับเงิน</td><td id="pdf-tbl-maturity">-</td></tr>
+                </table>
+            </div>
+
+            <div class="page-break-before"></div>
+            <div class="pdf-section-title"><i class="fa-solid fa-users"></i> แผนนี้เหมาะกับใคร?</div>
+            <div class="pdf-suitability-box">
+                <ul>
+                    <li><i class="fa-solid fa-check-circle" style="color:var(--primary);"></i> <strong>หัวหน้าครอบครัว:</strong> ที่ต้องการสร้างมรดกเงินก้อนใหญ่ทิ้งไว้ให้คนข้างหลัง เพื่อเป็นหลักประกันความมั่นคงทางการเงิน</li>
+                    <li><i class="fa-solid fa-check-circle" style="color:var(--primary);"></i> <strong>ผู้ที่กังวลค่าใช้จ่ายโรคร้าย:</strong> ต้องการวงเงินคุ้มครองโรคร้ายแรงสูงสุด 50 โรค เพื่อครอบคลุมค่ารักษาที่อาจสูงถึงหลักล้าน</li>
+                    <li><i class="fa-solid fa-check-circle" style="color:var(--primary);"></i> <strong>ผู้ที่ต้องการวางแผนระยะยาว:</strong> ทำครั้งเดียว ให้ความคุ้มครองยาวนานตลอดชีพ (90 ปี)</li>
+                </ul>
+            </div>
+
+            <div class="pdf-section-title" style="margin-bottom: 20px;"><i class="fa-solid fa-virus-covid"></i> รายละเอียด 50 โรคร้ายแรง</div>
+            
+            <div class="ci-infographic-wrapper">
+                <div class="ci-infographic">
+                    <div class="ci-top-area">
+                        <div class="ci-top-left">
+                            <h2 class="ci-main-title">รายชื่อโรคที่คุ้มครอง 50 โรคร้ายแรง</h2>
+                            
+                            <div class="ci-early-flex">
+                                <div class="ci-early-label">
+                                    ระยะเริ่มต้น<br><span>(Early Stage)</span>
+                                    <span class="count">5 โรคร้ายแรง</span>
+                                </div>
+                                <ul class="ci-early-list">
+                                    <li><span class="num">1.</span> โรคมะเร็งระยะไม่ลุกลาม</li>
+                                    <li><span class="num">2.</span> โรคหลอดเลือดหัวใจตีบที่รักษาด้วยการสวนหลอดเลือดหัวใจ</li>
+                                    <li><span class="num">3.</span> โรคหลอดเลือดสมองที่ต้องได้รับการผ่าตัดลอกหลอดเลือดแดงคาโรติด</li>
+                                    <li><span class="num">4.</span> โรคหลอดเลือดสมองโป่งพองที่รักษาโดยใช้ขดลวดผ่านสายสวนทางหลอดเลือด</li>
+                                    <li><span class="num">5.</span> โรคหลอดเลือดสมองที่ได้รับการรักษาโดยวิธีใส่สายสวนเส้นเลือดแดงบริเวณคอ</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="ci-top-right">
+                            <img src="cancer.png" alt="Patient Care">
+                        </div>
+                    </div>
+
+                    <div class="ci-late-grid">
+                        <div>
+                            <div class="ci-late-label">
+                                ระยะรุนแรง (Last Stage)<br><span>45 โรคร้ายแรง</span>
+                            </div>
+                            
+                            <div class="ci-cat">
+                                <h4>โรคเกี่ยวกับมะเร็ง</h4>
+                                <ol>
+                                    <li><span class="num">1.</span> โรคมะเร็งระยะลุกลาม</li>
+                                </ol>
+                            </div>
+                            <div class="ci-cat">
+                                <h4>โรคเกี่ยวกับหัวใจและหลอดเลือด</h4>
+                                <ol>
+                                    <li><span class="num">2.</span> โรคกล้ามเนื้อหัวใจตายเฉียบพลันจากการขาดเลือด</li>
+                                    <li><span class="num">3.</span> การผ่าตัดเส้นเลือดเลี้ยงกล้ามเนื้อหัวใจ</li>
+                                    <li><span class="num">4.</span> การผ่าตัดลิ้นหัวใจโดยวิธีการเปิดหัวใจ</li>
+                                    <li><span class="num">5.</span> การผ่าตัดเส้นเลือดแดงใหญ่ เอออร์ต้า</li>
+                                    <li><span class="num">6.</span> โรคกล้ามเนื้อหัวใจ</li>
+                                    <li><span class="num">7.</span> โรคเส้นเลือดหัวใจตีบ</li>
+                                </ol>
+                            </div>
+                            <div class="ci-cat">
+                                <h4>โรคเกี่ยวกับกล้ามเนื้อ กระดูกและข้อ</h4>
+                                <ol>
+                                    <li><span class="num">8.</span> ภาวะข้ออักเสบรูมาตอยด์ชนิดรุนแรง</li>
+                                    <li><span class="num">9.</span> โรคกล้ามเนื้ออักเสบ</li>
+                                    <li><span class="num">10.</span> การผ่าตัดกระดูกสันหลังคดที่ไม่ทราบสาเหตุ</li>
+                                </ol>
+                            </div>
+                            <div class="ci-cat">
+                                <h4>โรคเกี่ยวกับระบบประสาทและสมอง</h4>
+                                <ol>
+                                    <li><span class="num">11.</span> โรคหลอดเลือดสมองแตกหรืออุดตัน</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="ci-cat">
+                                <ol>
+                                    <li><span class="num">12.</span> เนื้องอกในสมองชนิดที่ไม่ใช่มะเร็ง</li>
+                                    <li><span class="num">13.</span> สมองอักเสบจากเชื้อไวรัส</li>
+                                    <li><span class="num">14.</span> โรคเยื่อหุ้มสมองและไขสันหลังอักเสบจากเชื้อแบคทีเรีย</li>
+                                    <li><span class="num">15.</span> โรคของเซลล์ประสาทควบคุมการเคลื่อนไหว</li>
+                                    <li><span class="num">16.</span> โรคสมองเสื่อมชนิดอัลไซเมอร์</li>
+                                    <li><span class="num">17.</span> โรคพาร์กินสัน</li>
+                                    <li><span class="num">18.</span> โรคหลอดเลือดสมองโป่งพองที่ต้องรักษาโดยการผ่าตัด</li>
+                                    <li><span class="num">19.</span> โรคระบบประสาทมัลติเพิล สเคลอโรสิส</li>
+                                </ol>
+                            </div>
+                            <div class="ci-cat">
+                                <h4>โรคเกี่ยวกับอวัยวะสำคัญ</h4>
+                                <ol>
+                                    <li><span class="num">20.</span> การผ่าตัดเปลี่ยนอวัยวะหรือปลูกถ่ายไขกระดูก</li>
+                                    <li><span class="num">21.</span> ไตวายเรื้อรัง</li>
+                                    <li><span class="num">22.</span> ตับวาย</li>
+                                    <li><span class="num">23.</span> โรคหลอดลมปอดอุดกั้นเรื้อรังขั้นรุนแรง/โรคปอดระยะสุดท้าย</li>
+                                    <li><span class="num">24.</span> โรคไวรัสตับอักเสบขั้นรุนแรง</li>
+                                    <li><span class="num">25.</span> ลูปัส จากโรคซิสเต็มมิค ลูปัส อีริเธมาโตซูส</li>
+                                    <li><span class="num">26.</span> ภาวะตับอ่อนอักเสบที่กลับเป็นซ้ำและเรื้อรัง</li>
+                                </ol>
+                            </div>
+                            <div class="ci-cat">
+                                <ol>
+                                    <li><span class="num">27.</span> โรคถุงน้ำในไต</li>
+                                    <li><span class="num">28.</span> โรคลำไส้อักเสบเป็นแผลรุนแรง</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="ci-cat ci-cat-others">
+                                <h4>อื่นๆ</h4>
+                                <ol>
+                                    <li><span class="num">29.</span> การสูญเสียการได้ยิน</li>
+                                    <li><span class="num">30.</span> การสูญเสียความสามารถในการพูด</li>
+                                    <li><span class="num">31.</span> แผลไหม้ฉกรรจ์</li>
+                                    <li><span class="num">32.</span> อัมพาตของกล้ามเนื้อแขนหรือขา</li>
+                                    <li><span class="num">33.</span> โรคโปลิโอ</li>
+                                    <li><span class="num">34.</span> การสูญเสียการดำรงชีพอย่างอิสระ</li>
+                                    <li><span class="num">35.</span> ตาบอด</li>
+                                    <li><span class="num">36.</span> การฉีกขาดของรากประสาทต้นแขน</li>
+                                    <li><span class="num">37.</span> โรคหนังแข็งชนิดลุกลาม</li>
+                                    <li><span class="num">38.</span> โรคเท้าช้าง</li>
+                                    <li><span class="num">39.</span> การทุพพลภาพถาวรสิ้นเชิง (ก่อนอายุ 70 ปี)</li>
+                                    <li><span class="num">40.</span> โรคโลหิตจางจากไขกระดูกไม่สร้างเม็ดโลหิต</li>
+                                    <li><span class="num">41.</span> โรคเนื้อเยื่อพังผืดอักเสบติดเชื้อและเป็นเนื้อตาย</li>
+                                    <li><span class="num">42.</span> โรคแรงดันในหลอดเลือดแดงปอดสูงแบบปฐมภูมิ</li>
+                                    <li><span class="num">43.</span> ภาวะโคม่า</li>
+                                    <li><span class="num">44.</span> การบาดเจ็บที่ศีรษะอย่างรุนแรง</li>
+                                    <li><span class="num">45.</span> ภาวะอะแพลลิก</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pdf-section-title"><i class="fa-solid fa-clock-rotate-left"></i> ระยะเวลารอคอย (Waiting Period)</div>
+            <div class="pdf-rules-list">
+                <ul>
+                    <li><strong>ระยะเวลารอคอย 90 วัน</strong> นับตั้งแต่วันที่กรมธรรม์มีผลบังคับ สำหรับความคุ้มครอง 50 โรคร้ายแรง</li>
+                    <li><strong>ระยะเวลารอคอยอุบัติเหตุ</strong> คุ้มครองทันทีนับตั้งแต่วันที่กรมธรรม์มีผลบังคับ</li>
+
+                    <li>ไม่คุ้มครองกรณีผู้เอาประกันภัยได้รับการวินิจฉัย หรือมีอาการของโรคร้ายแรงก่อนหรือภายใน 90 วัน นับจากวันที่เริ่มมีผลคุ้มครอง</li>
+                </ul>
+            </div>
+
+            <div class="page-break-before"></div>
+            <div class="pdf-section-title"><i class="fa-solid fa-circle-exclamation"></i> ข้อยกเว้นความคุ้มครองที่สำคัญ</div>
+            <div class="pdf-rules-list">
+                <ul>
+                    <li>การฆ่าตัวตายภายใน 1 ปี นับตั้งแต่วันที่กรมธรรม์มีผลบังคับ</li>
+                    <li>การถูกผู้รับประโยชน์ฆ่าตายโดยเจตนา</li>
+                    <li>สภาพที่เป็นมาก่อนการเอาประกันภัย (Pre-existing Condition) ที่ไม่ได้แจ้งให้บริษัททราบในขั้นตอนการแถลงประวัติสุขภาพ</li>
+                    <li>การบาดเจ็บหรือเจ็บป่วยที่เกิดจากการใช้ยาเสพติด หรือแอลกอฮอล์</li>
+                </ul>
+            </div>
+
+            <div class="pdf-section-title"><i class="fa-solid fa-laptop-medical"></i> ขั้นตอนการสมัครออนไลน์ (E-Submission)</div>
+            <div class="pdf-app-steps">
+                <div class="pdf-step"><i class="fa-solid fa-address-card"></i><span>1. ให้ข้อมูลและ<br>ตอบคำถามสุขภาพตามจริง</span></div>
+                <div class="pdf-step"><i class="fa-solid fa-heart-circle-check"></i><span>2. ยืนยันตัวตน<br>รอรับลิ้งค์ SMS</span></div>
+                <div class="pdf-step"><i class="fa-solid fa-credit-card"></i><span>3. ชำระเบี้ยประกัน<br>ผ่าน QR / บัตรเครดิต</span></div>
+                <div class="pdf-step"><i class="fa-solid fa-file-contract"></i><span>4. อนุมัติและรับ<br>กรมธรรม์ E-Policy</span></div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
+                <p style="font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom:10px;">จัดการกรมธรรม์ง่ายๆ ยื่นเคลมไว ผ่านแอป Omne by FWD</p>
+                <img src="omne.jpg" alt="Omne App by FWD" style="max-width: 450px; border-radius: 8px; border: 1px solid var(--border-color);">
+            </div>
+        </div>
+
+        <div id="modal-health-content" class="modal-body" style="display:none; text-align: center; padding: 60px 20px;">
+            <i class="fa-solid fa-person-digging" style="font-size: 60px; color: var(--border-color); margin-bottom: 20px;"></i>
+            <h2 style="color: var(--text-dark);">ส่วนของข้อเสนอประกันสุขภาพ</h2>
+            <p style="color: var(--text-grey);">อยู่ระหว่างการอัพเดตข้อมูลสำหรับพิมพ์ใบเสนอราคาครับ</p>
+        </div>
+
+        <div class="modal-footer">
+            <button onclick="exportAndShareImage()" class="btn-share" id="btn-share-img"><i class="fa-solid fa-share-nodes"></i> ส่งออกเป็นภาพ / แชร์</button>
+            <button onclick="window.print()" class="btn-print"><i class="fa-solid fa-print"></i> บันทึกเป็น PDF / พิมพ์</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // ================= DATA =================
-    // SAVINGS DATA
-    const rateTableMain = {
-        16:{male:1710,female:1330},17:{male:1750,female:1380},18:{male:1790,female:1410},19:{male:1830,female:1460},20:{male:1870,female:1490},21:{male:1930,female:1530},22:{male:1980,female:1570},23:{male:2040,female:1610},24:{male:2040,female:1650},25:{male:2090,female:1710},26:{male:2150,female:1750},27:{male:2200,female:1780},28:{male:2260,female:1830},29:{male:2310,female:1880},30:{male:2370,female:1940},31:{male:2420,female:1990},32:{male:2480,female:2060},33:{male:2530,female:2110},34:{male:2590,female:2180},35:{male:2640,female:2230},36:{male:2750,female:2310},37:{male:2810,female:2380},38:{male:2860,female:2450},39:{male:2920,female:2520},40:{male:3000,female:2600},41:{male:3080,female:2670},42:{male:3190,female:2730},43:{male:3300,female:2840},44:{male:3410,female:2920},45:{male:3470,female:3000},46:{male:3580,female:3080},47:{male:3690,female:3190},48:{male:3800,female:3280},49:{male:3910,female:3390},50:{male:4020,female:3490},51:{male:4130,female:3590},52:{male:4290,female:3740},53:{male:4400,female:3840},54:{male:4620,female:4020},55:{male:4730,female:4180},56:{male:4950,female:4350},57:{male:5170,female:4510},58:{male:5340,female:4680},59:{male:5500,female:4840},60:{male:5720,female:5010},61:{male:5940,female:5170},62:{male:6220,female:5390},63:{male:6440,female:5560},64:{male:6710,female:5780},65:{male:6990,female:6000}
-    };
-    const rateTableCI = {
-        16:{male:164,female:120},17:{male:176,female:118},18:{male:183,female:114},19:{male:188,female:110},20:{male:188,female:108},21:{male:194,female:108},22:{male:197,female:112},23:{male:202,female:117},24:{male:208,female:124},25:{male:214,female:133},26:{male:217,female:140},27:{male:225,female:151},28:{male:232,female:162},29:{male:239,female:172},30:{male:248,female:185},31:{male:260,female:201},32:{male:276,female:222},33:{male:296,female:248},34:{male:320,female:278},35:{male:346,female:310},36:{male:377,female:345},37:{male:405,female:376},38:{male:434,female:404},39:{male:466,female:431},40:{male:498,female:458},41:{male:539,female:480},42:{male:582,female:515},43:{male:632,female:553},44:{male:687,female:596},45:{male:749,female:644},46:{male:817,female:700},47:{male:882,female:753},48:{male:947,female:804},49:{male:1016,female:856},50:{male:1091,female:903},51:{male:1149,female:954},52:{male:1238,female:988},53:{male:1340,female:1015},54:{male:1454,female:1041},55:{male:1584,female:1072},56:{male:1748,female:1135},57:{male:1933,female:1222},58:{male:2130,female:1307},59:{male:2323,female:1415},60:{male:2579,female:1570},61:{male:2907,female:1767},62:{male:3233,female:1977},63:{male:3599,female:2168},64:{male:4012,female:2373},65:{male:4640,female:2769}
-    };
+    const rateTableMain = {16:{male:1710,female:1330},17:{male:1750,female:1380},18:{male:1790,female:1410},19:{male:1830,female:1460},20:{male:1870,female:1490},21:{male:1930,female:1530},22:{male:1980,female:1570},23:{male:2040,female:1610},24:{male:2040,female:1650},25:{male:2090,female:1710},26:{male:2150,female:1750},27:{male:2200,female:1780},28:{male:2260,female:1830},29:{male:2310,female:1880},30:{male:2370,female:1940},31:{male:2420,female:1990},32:{male:2480,female:2060},33:{male:2530,female:2110},34:{male:2590,female:2180},35:{male:2640,female:2230},36:{male:2750,female:2310},37:{male:2810,female:2380},38:{male:2860,female:2450},39:{male:2920,female:2520},40:{male:3000,female:2600},41:{male:3080,female:2670},42:{male:3190,female:2730},43:{male:3300,female:2840},44:{male:3410,female:2920},45:{male:3470,female:3000},46:{male:3580,female:3080},47:{male:3690,female:3190},48:{male:3800,female:3280},49:{male:3910,female:3390},50:{male:4020,female:3490},51:{male:4130,female:3590},52:{male:4290,female:3740},53:{male:4400,female:3840},54:{male:4620,female:4020},55:{male:4730,female:4180},56:{male:4950,female:4350},57:{male:5170,female:4510},58:{male:5340,female:4680},59:{male:5500,female:4840},60:{male:5720,female:5010},61:{male:5940,female:5170},62:{male:6220,female:5390},63:{male:6440,female:5560},64:{male:6710,female:5780},65:{male:6990,female:6000}};
+    const rateTableCI = {16:{male:164,female:120},17:{male:176,female:118},18:{male:183,female:114},19:{male:188,female:110},20:{male:188,female:108},21:{male:194,female:108},22:{male:197,female:112},23:{male:202,female:117},24:{male:208,female:124},25:{male:214,female:133},26:{male:217,female:140},27:{male:225,female:151},28:{male:232,female:162},29:{male:239,female:172},30:{male:248,female:185},31:{male:260,female:201},32:{male:276,female:222},33:{male:296,female:248},34:{male:320,female:278},35:{male:346,female:310},36:{male:377,female:345},37:{male:405,female:376},38:{male:434,female:404},39:{male:466,female:431},40:{male:498,female:458},41:{male:539,female:480},42:{male:582,female:515},43:{male:632,female:553},44:{male:687,female:596},45:{male:749,female:644},46:{male:817,female:700},47:{male:882,female:753},48:{male:947,female:804},49:{male:1016,female:856},50:{male:1091,female:903},51:{male:1149,female:954},52:{male:1238,female:988},53:{male:1340,female:1015},54:{male:1454,female:1041},55:{male:1584,female:1072},56:{male:1748,female:1135},57:{male:1933,female:1222},58:{male:2130,female:1307},59:{male:2323,female:1415},60:{male:2579,female:1570},61:{male:2907,female:1767},62:{male:3233,female:1977},63:{male:3599,female:2168},64:{male:4012,female:2373},65:{male:4640,female:2769}};
 
-    // ADULT HEALTH DATA
     const hlthPlanDetails = {
         bronze:{name:'Bronze',limit:1000000,room:2500,opd:3000,ciMoney:'-',ciRoom:'-',dental:'-',healthCheck:'-',altMed:'-',maternity:'-',deductAmount:30000},
         silver:{name:'Silver',limit:3000000,room:4000,opd:5000,ciMoney:'-',ciRoom:'-',dental:'-',healthCheck:'-',altMed:'-',maternity:'-',deductAmount:30000},
@@ -868,7 +1474,6 @@
         }
     };
 
-    // KIDS HEALTH DATA
     const kidPlanDetails = {
         'bronze': { name: 'Bronze', icon: '🧸', limit: 1000000, limitText: '1 ล้าน', room: 2500, opdKid: 3000, ciMoney: '-', ciRoom: '-', deductibles: [15000, 30000] },
         'silver': { name: 'Silver', icon: '🚗', limit: 3000000, limitText: '3 ล้าน', room: 4000, opdKid: 5000, ciMoney: '-', ciRoom: '-', deductibles: [15000, 30000] },
@@ -882,7 +1487,6 @@
         'platinum': { '0': { '0-1': 172408, '2-3': 154088, '4-5': 124583 }, '25000': { '0-1': 137577, '2-3': 121282, '4-5': 96240 }, '50000': { '0-1': 108889, '2-3': 94213, '4-5': 72815 } }
     };
 
-    // PRIMA CARE DATA
     const premaPlanConfig = {
         's': { name: 'S', room: 1500, icu: 3000, treat: 15000, surg: 60000, doctor: 1000, acc: 5000, minor: 5000, ci: 60000 },
         'm': { name: 'M', room: 3000, icu: 6000, treat: 25000, surg: 100000, doctor: 1000, acc: 7500, minor: 6000, ci: 100000 },
@@ -905,7 +1509,6 @@
             female: { s: [21605, 15225, 8410, 9860, 11890, 12905, 14790, 16675, 20880, 26535, 34075], m: [33205, 24650, 13630, 16095, 19285, 20880, 24070, 27115, 33785, 43065, 55390], l: [48285, 35815, 19720, 23200, 27840, 30160, 34800, 39295, 49155, 62495, 80330], xl: [63655, 50025, 27550, 32480, 39005, 42195, 48720, 54955, 68730, 87435, 112375], xxl: [81055, 63655, 35090, 41325, 49590, 53795, 62060, 70035, 87435, 111215, 142970] }
         }
     };
-
 
     // ================= STATE =================
     let currentView = 'savings'; 
@@ -938,6 +1541,43 @@
         if(a <= 60) return 8; if(a <= 65) return 9; return 10;
     }
 
+    // ================= MODAL LOGIC =================
+    function openProposalModal() {
+        document.getElementById('proposal-modal').style.display = 'flex';
+        
+        if (currentView === 'savings') {
+            document.getElementById('modal-savings-content').style.display = 'block';
+            document.getElementById('modal-health-content').style.display = 'none';
+            
+            const planNameText = document.getElementById('sav-display-plan-sub').innerText;
+            const mainSum = formatNumber(savMainSum);
+            const ciSum = formatNumber(savCiSum);
+            
+            document.getElementById('pdf-sav-plan-badge').innerText = savPlanId > 0 ? "แผน " + formatNumber(savMainSum + savCiSum) : "ปรับแต่งเอง";
+            document.getElementById('pdf-sav-premium').innerText = document.getElementById('sav-total-price').innerText;
+            document.getElementById('pdf-sav-main-premium').innerText = document.getElementById('sav-main-price').innerText.replace(' บาท', '');
+            document.getElementById('pdf-sav-ci-premium').innerText = document.getElementById('sav-ci-price').innerText.replace(' บาท', '');
+            document.getElementById('pdf-sav-main-sum').innerText = mainSum;
+            document.getElementById('pdf-sav-ci-sum').innerText = ciSum;
+
+            // คัดลอกข้อมูลตัวเลขผลประโยชน์ไปที่ตาราง PDF
+            document.getElementById('pdf-tbl-early-stage').innerText = document.getElementById('sav-tbl-early-stage').innerText;
+            document.getElementById('pdf-tbl-last-stage-1').innerText = document.getElementById('sav-tbl-last-stage-1').innerText;
+            document.getElementById('pdf-tbl-last-stage-2').innerText = document.getElementById('sav-tbl-last-stage-2').innerText;
+            document.getElementById('pdf-tbl-death-1').innerText = document.getElementById('sav-tbl-death-1').innerText;
+            document.getElementById('pdf-tbl-death-2').innerText = document.getElementById('sav-tbl-death-2').innerText;
+            document.getElementById('pdf-tbl-death-3').innerText = document.getElementById('sav-tbl-death-3').innerText;
+            document.getElementById('pdf-tbl-maturity').innerText = document.getElementById('sav-tbl-maturity').innerText;
+            
+        } else {
+            document.getElementById('modal-savings-content').style.display = 'none';
+            document.getElementById('modal-health-content').style.display = 'block';
+        }
+    }
+    
+    function closeProposalModal() {
+        document.getElementById('proposal-modal').style.display = 'none';
+    }
 
     // ================= VIEW NAVIGATION =================
     function switchView(viewName) {
@@ -959,16 +1599,11 @@
 
     function switchHealthSubView(subView) {
         currentHealthSubView = subView;
-        
-        // Update Buttons
         document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById(`sub-btn-${subView}`).classList.add('active');
-        
-        // Hide all sub-views, show target
         document.querySelectorAll('.health-sub-view').forEach(v => v.classList.remove('active'));
         document.getElementById(`health-sub-${subView}`).classList.add('active');
         document.getElementById(`health-res-${subView}`).classList.add('active');
-        
         triggerHealthCalculations();
         updateStickyBar();
     }
@@ -978,7 +1613,6 @@
         if (currentHealthSubView === 'kids') calculateKids();
         if (currentHealthSubView === 'prema') calculatePrema();
     }
-
 
     // ================= STICKY BAR =================
     function updateStickyBar() {
@@ -1220,6 +1854,72 @@
         updateStickyBar();
     }
 
+
+    // ================= EXPORT & SHARE LOGIC =================
+    async function exportAndShareImage() {
+        const btn = document.getElementById('btn-share-img');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังประมวลผล...';
+        btn.disabled = true;
+
+        try {
+            // ค้นหาเป้าหมายที่จะจับภาพตามแผนที่เลือก
+            let captureTarget = null;
+            if (currentView === 'savings') {
+                captureTarget = document.getElementById('modal-savings-content');
+            } else {
+                captureTarget = document.getElementById('modal-health-content');
+            }
+
+            // แคปภาพเนื้อหาทั้งหมดใน Modal
+            const canvas = await html2canvas(captureTarget, {
+                scale: 2, // เพิ่มความละเอียดภาพ
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'proposal.png', { type: 'image/png' });
+
+                // ทดสอบ Web Share API (มือถือ / แท็บเล็ต)
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            title: 'ใบเสนอราคาแผนประกัน',
+                            text: 'รายละเอียดแผนประกันจากลิตา FWD',
+                            files: [file]
+                        });
+                    } catch (error) {
+                        console.log('Error sharing or user cancelled:', error);
+                        fallbackDownload(blob); // หากผู้ใช้กดยกเลิกหรือแชร์ไม่ได้ ให้ดาวน์โหลดแทน
+                    }
+                } else {
+                    // หาก Web Share API ใช้ไม่ได้ (คอมพิวเตอร์) ให้ดาวน์โหลด
+                    fallbackDownload(blob);
+                }
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 'image/png');
+
+        } catch (err) {
+            console.error('Error generating image:', err);
+            alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function fallbackDownload(blob) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'proposal.png';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
 
     // ================= VOICE LOGIC =================
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
